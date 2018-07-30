@@ -1,6 +1,7 @@
 package read
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -44,12 +45,19 @@ func (s *Script) MarkCharIds() {
 // Method MarkAndFormatKeywords marks keywords in the script. Furthermore marks
 // KeywordEnd flag.
 func (s *Script) MarkMainKeywords() {
+	fmt.Println("Start MarkMainKeywords")
 	s.MarkCharIds()
 	mainKeywords := KeywordsRegexpsForWSFormat()
 
 	for _, keywordRegexp := range mainKeywords {
 		reg := regexp.MustCompile(keywordRegexp)
-		idx := reg.FindAllStringIndex(strings.ToLower(s.RawContent), -1)
+		idx := reg.FindAllStringIndex(s.RawContent, -1)
+
+		// TODO: Delete after test
+		fmt.Printf("Regexp: %q \n", keywordRegexp)
+		for _, e := range idx {
+			fmt.Printf("    -[%d, %d] \n", e[0], e[1])
+		}
 		s.markIsMainKeyword(idx)
 	}
 }
@@ -59,7 +67,13 @@ func (s *Script) MarkMainKeywords() {
 func (s *Script) markIsMainKeyword(indexes [][]int) {
 	for _, idx := range indexes {
 		for wId, flag := range *s.Flags {
-			if flag.CharIdStart >= idx[0] && flag.CharIdStart <= idx[1] {
+			if idx[0] == idx[1] && flag.CharIdStart >= idx[0] &&
+				flag.CharIdStart <= idx[1] {
+				(*s.Flags)[wId].IsMainKeyword = true
+			}
+
+			if idx[0] < idx[1] && flag.CharIdStart >= idx[0] &&
+				flag.CharIdStart < idx[1] {
 				(*s.Flags)[wId].IsMainKeyword = true
 			}
 

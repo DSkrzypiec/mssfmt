@@ -47,6 +47,7 @@ func (rs RawScript) ToScript() Script {
 	script.initFlags()
 	script.MarkMainKeywords()
 	script.MarkLineNumbers()
+	script.MarkLineIndentLvl()
 	script.MarkComments()
 
 	return script
