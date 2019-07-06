@@ -1,13 +1,12 @@
 package read
 
 import (
-	"fmt"
+    "fmt"
 	"testing"
 )
 
 func TestCommentRemarkSimple(t *testing.T) {
-	sql := `
---some inline comment select
+	sql := `--some inline comment select
 	select top 10 * from tableName
 	
 	select top /*some comment*/ 10 * from tableName
@@ -18,41 +17,19 @@ func TestCommentRemarkSimple(t *testing.T) {
 	rawS := RawScript{"x.sql", "./x.sql", sql}
 	s := rawS.ToScript()
 
-	if !(*s.Flags)[5].IsComment {
-		t.Errorf("Expected to be comment - {%s|id=5} \n", s.Words[5])
-		fmt.Println(sql)
+	commIds := []int{0, 1, 2, 3, 4, 5, 6, 28, 29, 30, 41, 42, 43, 44, 45}
+	notComm := []int{8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18}
+
+	for _, wId := range commIds {
+		if !(*s.Flags)[wId].IsComment {
+			t.Errorf("Expected comment for {%s|id=%d}", s.Words[wId], wId)
+		}
 	}
 
-	if !(*s.Flags)[30].IsComment {
-		t.Errorf("Expected to be comment - {%s|id=30} \n", s.Words[30])
-		fmt.Println(sql)
-	}
-
-}
-
-// Test for MarkCharIds method.
-func TestCharIds(t *testing.T) {
-	sql := `select top 10
-*
-from tableName t
-where t.X = 1`
-
-	rawS := RawScript{"x.sql", "./x.sql", sql}
-	s := rawS.ToScript()
-	flags := *s.Flags
-
-	if flags[0].CharIdStart != 0 || flags[0].CharIdEnd != 5 {
-		t.Errorf("Expected [0, 5]. Got: [%d, %d]. \n", flags[0].CharIdStart,
-			flags[0].CharIdEnd)
-	}
-	if flags[3].CharIdStart != 10 || flags[3].CharIdEnd != 10 {
-		t.Errorf("Expected [10, 10]. Got: [%d, %d]. \n", flags[3].CharIdStart,
-			flags[3].CharIdEnd)
-	}
-
-	if flags[10].CharIdStart != 21 || flags[10].CharIdEnd != 29 {
-		t.Errorf("Expected [21, 29]. Got: [%d, %d]. \n", flags[10].CharIdStart,
-			flags[10].CharIdEnd)
+	for _, wId := range notComm {
+		if (*s.Flags)[wId].IsComment {
+			t.Errorf("Expected not a comment for {%s|id=%d}", s.Words[wId], wId)
+		}
 	}
 }
 
@@ -86,11 +63,37 @@ func TestIsMainKeyword(t *testing.T) {
 	}
 
 	if !(*s3.Flags)[0].IsMainKeyword {
-		t.Errorf("[sql3] Should be marked as MainKeyword \n", s3.Words[0])
+		t.Errorf("[sql3] Should be marked as MainKeyword: %s \n", s3.Words[0])
 	}
 
 	for wId, w := range s1.Words {
 		fmt.Printf("%q - IsKey = %t \n", w, (*s1.Flags)[wId].IsMainKeyword)
+	}
+}
+
+// Test for MarkCharIds method.
+func TestCharIds(t *testing.T) {
+	sql := `select top 10
+*
+from tableName t
+where t.X = 1`
+
+	rawS := RawScript{"x.sql", "./x.sql", sql}
+	s := rawS.ToScript()
+	flags := *s.Flags
+
+	if flags[0].CharIdStart != 0 || flags[0].CharIdEnd != 5 {
+		t.Errorf("Expected [0, 5]. Got: [%d, %d]. \n", flags[0].CharIdStart,
+			flags[0].CharIdEnd)
+	}
+	if flags[3].CharIdStart != 10 || flags[3].CharIdEnd != 10 {
+		t.Errorf("Expected [10, 10]. Got: [%d, %d]. \n", flags[3].CharIdStart,
+			flags[3].CharIdEnd)
+	}
+
+	if flags[10].CharIdStart != 21 || flags[10].CharIdEnd != 29 {
+		t.Errorf("Expected [21, 29]. Got: [%d, %d]. \n", flags[10].CharIdStart,
+			flags[10].CharIdEnd)
 	}
 }
 

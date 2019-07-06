@@ -1,7 +1,6 @@
 package read
 
 import (
-	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -15,14 +14,13 @@ func (s *Script) initFlags() {
 }
 
 // Method markLineNumbers assigns for each word it's line number.
-func (s *Script) MarkLineNumbers() {
+func (s *Script) markLineNumbers() {
 	lineNumber := 1
 
 	for wordId, word := range s.Words {
 		(*s.Flags)[wordId].LineNumber = lineNumber
-
 		if word == "\n" || word == "\r" {
-			lineNumber += 1
+			lineNumber++
 		}
 	}
 }
@@ -33,7 +31,7 @@ func (s *Script) MarkLineNumbers() {
 // Example: For script content "select top 10 * from table"
 // Words[0] = "select" {CharIdStart = 0, CharIdEnd = 5}
 // Words[1] = " " {CharIdStart = 6, CharIdEnd = 6}
-func (s *Script) MarkCharIds() {
+func (s *Script) markCharIds() {
 	charId := -1
 	for wId, word := range s.Words {
 		(*s.Flags)[wId].CharIdStart = charId + 1
@@ -42,22 +40,15 @@ func (s *Script) MarkCharIds() {
 	}
 }
 
-// Method MarkAndFormatKeywords marks keywords in the script. Furthermore marks
+// Method markAndFormatKeywords marks keywords in the script. Furthermore marks
 // KeywordEnd flag.
-func (s *Script) MarkMainKeywords() {
-	fmt.Println("Start MarkMainKeywords")
-	s.MarkCharIds()
-	mainKeywords := KeywordsRegexpsForWSFormat()
+func (s *Script) markMainKeywords() {
+	s.markCharIds()
+	mainKeywords := keywordsRegexpsForWSFormat()
 
 	for _, keywordRegexp := range mainKeywords {
 		reg := regexp.MustCompile(keywordRegexp)
 		idx := reg.FindAllStringIndex(s.RawContent, -1)
-
-		// TODO: Delete after test
-		fmt.Printf("Regexp: %q \n", keywordRegexp)
-		for _, e := range idx {
-			fmt.Printf("    -[%d, %d] \n", e[0], e[1])
-		}
 		s.markIsMainKeyword(idx)
 	}
 }
@@ -71,12 +62,10 @@ func (s *Script) markIsMainKeyword(indexes [][]int) {
 				flag.CharIdStart <= idx[1] {
 				(*s.Flags)[wId].IsMainKeyword = true
 			}
-
 			if idx[0] < idx[1] && flag.CharIdStart >= idx[0] &&
 				flag.CharIdStart < idx[1] {
 				(*s.Flags)[wId].IsMainKeyword = true
 			}
-
 			if flag.CharIdStart > idx[1] {
 				break
 			}
@@ -87,7 +76,7 @@ func (s *Script) markIsMainKeyword(indexes [][]int) {
 // Function markComments determines whenever current word in the script is
 // comment or not. It updates scripts Flags. This function is used during
 // creating Script from RawScript.
-func (s *Script) MarkComments() {
+func (s *Script) markComments() {
 	isGlobalComment := false
 	isLineComment := false
 
@@ -112,7 +101,7 @@ func (s *Script) MarkComments() {
 		(*s.Flags)[wordId].IsComment = isLineComment || isGlobalComment
 
 		// 'word*/' is still a comment, therefore isGlobalComment cannot be set
-		// to false beofre IsComment flag assignment, becuase then is won't be a
+		// to false before IsComment flag assignment, becuase then it won't be a
 		// comment
 		if !isLineComment && isGlobalComment && globalEnd {
 			isGlobalComment = false
@@ -123,16 +112,16 @@ func (s *Script) MarkComments() {
 // Method markLineIndentLvl marks, for each word, flag "LineIndentLvl". That
 // means it assign for each word in the line it's level of indentation <=>
 // number of TABs at the front of line.
-func (s *Script) MarkLineIndentLvl() {
-	linesIndentLvls := s.LineIndentDepth()
+func (s *Script) markLineIndentLvl() {
+	linesIndentLvls := s.lineIndentDepth()
 
 	for wId, wFlag := range *s.Flags {
 		ll, ok := linesIndentLvls[wFlag.LineNumber]
 		if !ok {
+			// TODO!
 			log.Printf("Couldn't find LineIndevntLevel for line = %d \n.",
 				wFlag.LineNumber)
 		}
-
 		(*s.Flags)[wId].LineIndentLvl = ll
 	}
 }
@@ -150,7 +139,7 @@ func (s *Script) MarkLineIndentLvl() {
 // [6.]			t.A = 1
 //
 // Method returns {1:0, 2:1, 3:0, 4:1, 5:0, 6:2}
-func (s *Script) LineIndentDepth() map[int]int {
+func (s *Script) lineIndentDepth() map[int]int {
 	lineDepth := make(map[int]int, 0)
 
 	for id, e := range strings.Split(s.RawContent, "\n") {

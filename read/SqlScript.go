@@ -1,6 +1,6 @@
 package read
 
-import "github.com/DSkrzypiec/sqlfmt/stringF"
+import "mssfmt/stringF"
 
 // Script is the main object representing T-SQL script.
 // Field RawContent is a content of the script as a single string.
@@ -45,10 +45,10 @@ func (rs RawScript) ToScript() Script {
 		stringF.SplitWithSep(rs.Content), &sFlags}
 
 	script.initFlags()
-	script.MarkMainKeywords()
-	script.MarkLineNumbers()
-	script.MarkLineIndentLvl()
-	script.MarkComments()
+	script.markMainKeywords()
+	script.markLineNumbers()
+	script.markLineIndentLvl()
+	script.markComments()
 
 	return script
 }

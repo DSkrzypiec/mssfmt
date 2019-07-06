@@ -1,7 +1,7 @@
 package format
 
 import (
-	"github.com/DSkrzypiec/mssfmt/read"
+	"mssfmt/read"
 )
 
 type WsAroundKeywords struct {

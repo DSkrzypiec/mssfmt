@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/DSkrzypiec/mssfmt/format"
-	"github.com/DSkrzypiec/mssfmt/read"
+	"mssfmt/format"
+	"mssfmt/read"
 )
 
 func main() {

@@ -1,6 +1,6 @@
 package read
 
-func KeywordsRegexpsForWSFormat() []string {
+func keywordsRegexpsForWSFormat() []string {
 	return []string{
 		"(?i)[ \t\n\r\f]+select[ \t\n\r\f]+",
 		"(?i)[ \t\n\r\f]+select[ \t\n\r\f]+top[ \t\n\r\f]+[0-9]+[ \t\n\r\f]+",
@@ -14,7 +14,7 @@ func KeywordsRegexpsForWSFormat() []string {
 	}
 }
 
-func KeywordsRegexpsForWSReplace() map[string]string {
+func keywordsRegexpsForWSReplace() map[string]string {
 	return map[string]string{
 		"select[ \t\n\r\f]+top[ \t\n\r\f]+": "select top ",
 		"group[ \t\n\r\f]+by":               "group by",

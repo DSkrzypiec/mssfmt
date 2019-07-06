@@ -1,6 +1,6 @@
 package format
 
-import "github.com/DSkrzypiec/mssfmt/read"
+import "mssfmt/read"
 
 // Formatter is called any object that formats a SQL Script.
 type Formatter interface {

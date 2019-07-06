@@ -3,8 +3,8 @@ package format
 import (
 	"strings"
 
-	"github.com/DSkrzypiec/mssfmt/read"
-	"github.com/DSkrzypiec/mssfmt/stringF"
+	"mssfmt/read"
+	"mssfmt/stringF"
 )
 
 // Keywords struct is a type for satisfying Formatter interface for formatting
