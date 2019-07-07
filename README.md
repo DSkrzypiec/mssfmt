@@ -1,4 +1,4 @@
-# sqlfmt
+# mssfmt
 
 Tool for T-SQL (Microsoft SQL Server) code format.
 
@@ -24,7 +24,7 @@ Just use `go fmt`.
 
 ## Built With
 
-* [Go](https://golang.org/) - go version go1.9.4 linux/amd64 
+* [Go](https://golang.org/) - go version go1.11 windows/amd64 
 
 
 ## License
