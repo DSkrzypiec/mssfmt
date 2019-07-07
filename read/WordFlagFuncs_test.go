@@ -1,20 +1,12 @@
 package read
 
 import (
-    "fmt"
 	"testing"
+    "reflect"
 )
 
 func TestCommentRemarkSimple(t *testing.T) {
-	sql := `--some inline comment select
-	select top 10 * from tableName
-	
-	select top /*some comment*/ 10 * from tableName
-	/*
-		comment
-				*/
-	`
-	rawS := RawScript{"x.sql", "./x.sql", sql}
+	rawS := RawScript{"x.sql", "./x.sql", sqlComment}
 	s := rawS.ToScript()
 
 	commIds := []int{0, 1, 2, 3, 4, 5, 6, 28, 29, 30, 41, 42, 43, 44, 45}
@@ -34,41 +26,59 @@ func TestCommentRemarkSimple(t *testing.T) {
 }
 
 func TestIsMainKeyword(t *testing.T) {
-	sql1 := "... Select     toP \t \t \t 1000 someColumnName"
-	sql2 := "GROUP \n         \t    \t \n          bY"
-	sql3 := "froM"
+	sql1 := "SELECT TOP 10 x.Name from dbo.Table x"
+	sql2 := "  group \n         \t    \t \n          bY varX"
+	sql3 := "SELECT y, count(*) from TableName Where x = 1 grouP by y"
 
 	rawS1 := RawScript{"x.sql", "./x.sql", sql1}
 	rawS2 := RawScript{"x.sql", "./x.sql", sql2}
-	rawS3 := RawScript{"x.sql", "./x.sql", sql3}
+    rawS3 := RawScript{"x.sql", "./x.sql", sql3}
 	s1 := rawS1.ToScript()
 	s2 := rawS2.ToScript()
 	s3 := rawS3.ToScript()
 
 	for wId, w := range s1.Words {
-		if (wId == 0 || wId == 18) &&
-			(*s1.Flags)[wId].IsMainKeyword {
-			t.Errorf("[sql1] %s - Should be not marked as MainKeyword. \n", w)
-		}
-		if wId > 0 && wId < 18 && !(*s1.Flags)[wId].IsMainKeyword {
-			t.Errorf("[sql1] %s - Should be marked as MainKeyword. \n", w)
-		}
+        f := (*s1.Flags)[wId]
+        if (wId != 6 && wId < 10) && !f.IsMainKeyword {
+            t.Errorf("Supposed to be a keyword: %s\n", w)
+        }
 	}
 
-	// every word supposed to be MainKeyword
-	for wId, w := range s2.Words {
-		if !(*s2.Flags)[wId].IsMainKeyword {
-			t.Errorf("[sql2] %s - Should be marked as MainKeyword \n", w)
-		}
-	}
+    for i := 10; i < 13; i++ {
+        if (*s1.Flags)[i].IsMainKeyword {
+            t.Errorf("%s shouldn't be a keyword.\n", s1.Words[6])
+        }
+    }
 
-	if !(*s3.Flags)[0].IsMainKeyword {
-		t.Errorf("[sql3] Should be marked as MainKeyword: %s \n", s3.Words[0])
-	}
+    for i := 0; i < len(s2.Words) - 1; i++ {
+        f := (*s2.Flags)[i]
+        if !f.IsMainKeyword {
+            t.Errorf("Supposed to be a keyword: %s\n", s2.Words[i])
+        }
+    }
 
-	for wId, w := range s1.Words {
-		fmt.Printf("%q - IsKey = %t \n", w, (*s1.Flags)[wId].IsMainKeyword)
-	}
+    if (*s2.Flags)[len(s2.Words) - 1].IsMainKeyword {
+        t.Errorf("%s shouldn't be a keyword.\n", s2.Words[len(s2.Words)-1])
+    }
+
+    expected3Key := []int{0, 1, 9, 10, 11, 13, 14, 15, 21, 22, 23, 24, 25}
+    real3Key := make([]int, 0, 25)
+
+    for wId, _ := range s3.Words {
+        if (*s3.Flags)[wId].IsMainKeyword {
+            real3Key = append(real3Key, wId)
+        }
+    }
+
+    if len(expected3Key) != len(real3Key) {
+        t.Errorf("Expected: %d keywords, got: %d \n", len(expected3Key), 
+            len(real3Key))
+    }
+
+    if !reflect.DeepEqual(expected3Key, real3Key) {
+        t.Errorf("Expected keyword ids: [%v], got: [%v]\n", expected3Key, 
+            real3Key)
+    }
 }
 
 // Test for MarkCharIds method.
@@ -97,8 +107,16 @@ where t.X = 1`
 	}
 }
 
-func TestAllFlags(t *testing.T) {
-	sql := `-- some comment in select T-SQL script
+const sqlComment = `--some inline comment select
+	select top 10 * from tableName
+	
+	select top /*some comment*/ 10 * from tableName
+	/*
+		comment
+				*/
+	`
+
+const sqlFull = `-- some comment in select T-SQL script
 SELECT
 	t.X,
 	COUNT(*)  	AS Cnt
@@ -115,15 +133,3 @@ GROUP BY
 )
 select top 3 * from cte
 `
-
-	rawS := RawScript{"x.sql", "./x.sql", sql}
-	s := rawS.ToScript()
-	fmt.Println(sql)
-
-	for wId, w := range s.Words {
-		f := (*s.Flags)[wId]
-		fmt.Printf("[%d] %q {Comm=%t, MainK=%t, #Line=%d, LineInd=%d, Char={%d, %d}}\n",
-			wId, w, f.IsComment, f.IsMainKeyword, f.LineNumber, f.LineIndentLvl,
-			f.CharIdStart, f.CharIdEnd)
-	}
-}
