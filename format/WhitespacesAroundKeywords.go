@@ -2,6 +2,7 @@ package format
 
 import (
 	"mssfmt/read"
+    "strings"
 )
 
 type WsAroundKeywords struct {
@@ -12,23 +13,29 @@ type WsAroundKeywords struct {
 
 // Format method formats SQL keywords and whitespaces around them.
 func (w WsAroundKeywords) Format(script *read.Script) {
-	newWords := make([]string, 0, len(script.Words))
+	//newWords := make([]string, 0, len(script.Words))
+    //var prevWordIsKeyword bool = false
 
-	for wId, w := range script.Words {
-		f := (*script.Flags)[wId]
-		if f.IsMainKeyword && !f.IsComment {
-			newWord, ok := w.formatKeyword(w, f)
-			if ok {
-				newWords = append(newWords, newWord)
-			}
-			continue
-		}
-		newWords = append(newWords, w)
-	}
 
-	// Script update
+	//for wId, word := range script.Words {
+	//	f := (*script.Flags)[wId]
+	//	if f.IsMainKeyword && !f.IsComment {
+	//	}
+	//	newWords = append(newWords, word)
+	//}
+
+	//script.Words = newWords
+    //script.RawContent = strings.Join(newWords, "")
 }
 
-func (w WsAroundKeywords) formatKeyword(w string, flags read.ScriptFlags) (string, bool) {
-	// TODO
+func indent(level int) string {
+    if level <= 0 {
+        return ""
+    }
+
+    s := make([]string, level * 4)
+    for i := 0; i < level * 4; i++ {
+        s[i] = " "
+    }
+    return strings.Join(s, "")
 }

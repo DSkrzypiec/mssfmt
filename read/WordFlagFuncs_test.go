@@ -81,6 +81,30 @@ func TestIsMainKeyword(t *testing.T) {
     }
 }
 
+
+func TestLineNumbers(t *testing.T) {
+    sql := `select top 10
+* from
+table
+where
+x = 1
+--comm`
+
+	rawS := RawScript{"x.sql", "./x.sql", sql}
+	s := rawS.ToScript()
+	flags := *s.Flags
+
+    if flags[1].LineNumber != 1 {
+        t.Errorf("Expected 1, got: %d", flags[1].LineNumber)
+    }
+    if flags[8].LineNumber != 2 {
+        t.Errorf("Expected 2, got: %d", flags[8].LineNumber)
+    }
+    if flags[15].LineNumber != 5 {
+        t.Errorf("Expected 5, got: %d", flags[15].LineNumber)
+    }
+}
+
 // Test for MarkCharIds method.
 func TestCharIds(t *testing.T) {
 	sql := `select top 10
