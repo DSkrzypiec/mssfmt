@@ -1,6 +1,10 @@
 package read
 
-import "mssfmt/stringF"
+import (
+	"fmt"
+	"mssfmt/stringF"
+	"strings"
+)
 
 // Script is the main object representing T-SQL script.
 // Field RawContent is a content of the script as a single string.
@@ -31,11 +35,20 @@ type ScriptFlags []WordFlag
 // CharIdEnd - TODO: description
 type WordFlag struct {
 	IsComment     bool
-	IsMainKeyword bool
+	IsMainKeyword MainKeyword
 	LineNumber    int
 	LineIndentLvl int
 	CharIdStart   int // Start index of this word in the RawContent
 	CharIdEnd     int // End index of this word in the RawContent
+}
+
+// MainKeyword represents struct for keyword detection. If "Is" is true than
+// that word is a keyword. Keyword says which one. The Keyword filed is very
+// useful to not parse something like "  \t\n  Group   \t \n   by" into
+// "GROUP BY" phrase.
+type MainKeyword struct {
+	Is      bool
+	Keyword string
 }
 
 // ToScript method convertes RawScript into Script object.
@@ -51,4 +64,32 @@ func (rs RawScript) ToScript() Script {
 	script.markComments()
 
 	return script
+}
+
+// String method returns Script in form of all words and its flags. This
+// function is rather for development and debugging then for production use.
+func (s Script) String() string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("SQL Script: %s\n", s.FullPath))
+	sb.WriteString("Content (words) with description flags:\n\n")
+
+	for wId, word := range s.Words {
+		flags := (*s.Flags)[wId]
+		sb.WriteString(fmt.Sprintf("{%s} ", word))
+		sb.WriteString("{")
+
+		if flags.IsComment {
+			sb.WriteString("comment, ")
+		}
+		if flags.IsMainKeyword.Is {
+			sb.WriteString(fmt.Sprintf("keyword (%s), ", flags.IsMainKeyword.Keyword))
+		}
+
+		fStr := fmt.Sprintf("#Line=%d, Indent=%d, (%d, %d)", flags.LineNumber,
+			flags.LineIndentLvl, flags.CharIdStart, flags.CharIdEnd)
+		sb.WriteString(fStr)
+		sb.WriteString("}\n")
+	}
+
+	return sb.String()
 }

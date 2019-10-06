@@ -19,7 +19,7 @@ func (s *Script) markLineNumbers() {
 
 	for wordId, word := range s.Words {
 		(*s.Flags)[wordId].LineNumber = lineNumber
-		if word == "\n" || word == "\r" {
+		if word == "\n" {
 			lineNumber++
 		}
 	}
@@ -46,25 +46,25 @@ func (s *Script) markMainKeywords() {
 	s.markCharIds()
 	mainKeywords := keywordsRegexpsForWSFormat()
 
-	for _, keywordRegexp := range mainKeywords {
+	for keywordRegexp, keyword := range mainKeywords {
 		reg := regexp.MustCompile(keywordRegexp)
 		idx := reg.FindAllStringIndex(s.RawContent, -1)
-		s.markIsMainKeyword(idx)
+		s.markIsMainKeyword(idx, keyword)
 	}
 }
 
 // Method markIsMainKeyword marks IsMainKeyword flag for given result of
 // FindAllStringIndex applied in script for main keyword regex.
-func (s *Script) markIsMainKeyword(indexes [][]int) {
+func (s *Script) markIsMainKeyword(indexes [][]int, keyword string) {
 	for _, idx := range indexes {
 		for wId, flag := range *s.Flags {
 			if idx[0] == idx[1] && flag.CharIdStart >= idx[0] &&
 				flag.CharIdStart <= idx[1] {
-				(*s.Flags)[wId].IsMainKeyword = true
+				(*s.Flags)[wId].IsMainKeyword = MainKeyword{true, keyword}
 			}
 			if idx[0] < idx[1] && flag.CharIdStart >= idx[0] &&
 				flag.CharIdStart < idx[1] {
-				(*s.Flags)[wId].IsMainKeyword = true
+				(*s.Flags)[wId].IsMainKeyword = MainKeyword{true, keyword}
 			}
 			if flag.CharIdStart > idx[1] {
 				break

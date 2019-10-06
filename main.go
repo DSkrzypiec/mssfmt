@@ -36,4 +36,5 @@ func ReadFormatAndSave(pathRead, pathWrite string) {
 	format.ApplyFormats(&script, formats)
 
 	fmt.Println(script.RawContent)
+	fmt.Println(script)
 }
