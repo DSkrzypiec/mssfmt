@@ -3,7 +3,7 @@ package format
 import (
 	"strings"
 
-	"mssfmt/read"
+	"mssfmt/script"
 	"mssfmt/stringF"
 )
 
@@ -17,7 +17,7 @@ type Keywords struct {
 // interface. This method is a root function for formating T-SQL keywords.
 // It search keywords ignoring comments, whitespaces and some special
 // characters.
-func (k Keywords) Format(script *read.Script) {
+func (k Keywords) Format(script *script.SQL) {
 	for wordId, word := range script.Words {
 		isKeyword, formatted := isKeyword(word, k.ToUpper)
 		if isKeyword && !(*script.Flags)[wordId].IsComment {

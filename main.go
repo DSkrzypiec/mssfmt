@@ -7,6 +7,7 @@ import (
 
 	"mssfmt/format"
 	"mssfmt/read"
+	"mssfmt/script"
 )
 
 func main() {
@@ -31,7 +32,7 @@ func ReadFormatAndSave(pathRead, pathWrite string) {
 		log.Panic(readErr)
 	}
 
-	script := scriptRaw.ToScript()
+	script := script.ToSQL(scriptRaw)
 	formats := format.BuildFormatsRepo()
 	format.ApplyFormats(&script, formats)
 

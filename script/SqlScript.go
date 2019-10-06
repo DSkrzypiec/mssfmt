@@ -1,15 +1,16 @@
-package read
+package script
 
 import (
 	"fmt"
+	"mssfmt/read"
 	"mssfmt/stringF"
 	"strings"
 )
 
-// Script is the main object representing T-SQL script.
+// Type (script).SQL is the main object representing T-SQL script.
 // Field RawContent is a content of the script as a single string.
 // TODO:Extend description
-type Script struct {
+type SQL struct {
 	Name       string
 	FullPath   string
 	RawContent string
@@ -45,16 +46,19 @@ type WordFlag struct {
 // MainKeyword represents struct for keyword detection. If "Is" is true than
 // that word is a keyword. Keyword says which one. The Keyword filed is very
 // useful to not parse something like "  \t\n  Group   \t \n   by" into
-// "GROUP BY" phrase.
+// "GROUP BY" phrase. Fields CharIdStart and CharIdEnd are the boundries of the
+// keyword including whitespaces.
 type MainKeyword struct {
-	Is      bool
-	Keyword string
+	Is          bool
+	Keyword     string
+	CharIdStart int
+	CharIdEnd   int
 }
 
-// ToScript method convertes RawScript into Script object.
-func (rs RawScript) ToScript() Script {
+// ToSQL method convertes RawScript into Script object.
+func ToSQL(rs read.RawScript) SQL {
 	sFlags := ScriptFlags{}
-	script := Script{rs.Name, rs.FullPath, rs.Content,
+	script := SQL{rs.Name, rs.FullPath, rs.Content,
 		stringF.SplitWithSep(rs.Content), &sFlags}
 
 	script.initFlags()
@@ -68,7 +72,7 @@ func (rs RawScript) ToScript() Script {
 
 // String method returns Script in form of all words and its flags. This
 // function is rather for development and debugging then for production use.
-func (s Script) String() string {
+func (s SQL) String() string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("SQL Script: %s\n", s.FullPath))
 	sb.WriteString("Content (words) with description flags:\n\n")
@@ -82,7 +86,9 @@ func (s Script) String() string {
 			sb.WriteString("comment, ")
 		}
 		if flags.IsMainKeyword.Is {
-			sb.WriteString(fmt.Sprintf("keyword (%s), ", flags.IsMainKeyword.Keyword))
+			sb.WriteString(fmt.Sprintf("keyword (%s(%d-%d)), ",
+				flags.IsMainKeyword.Keyword, flags.IsMainKeyword.CharIdStart,
+				flags.IsMainKeyword.CharIdEnd))
 		}
 
 		fStr := fmt.Sprintf("#Line=%d, Indent=%d, (%d, %d)", flags.LineNumber,
