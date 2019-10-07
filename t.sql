@@ -1,4 +1,4 @@
---  some comment wHere, select
+--  some comment wHere, another comment
 
 	select tn.X, sum(tn.Y)  as y ,min(tn.Z) as z from tableName tn 
 	left join anotherT t ON tn.X = t.Y Where tn.A = 2

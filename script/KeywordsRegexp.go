@@ -11,5 +11,10 @@ func keywordsRegexpsForWSFormat() map[string]string {
 		"(?i)[ \t\n\r\f]*update[ \t\n\r\f]+":                                  "update",
 		"(?i)[ \t\n\r\f]*set[ \t\n\r\f]+":                                     "set",
 		"(?i)[ \t\n\r\f]+union[ \t\n\r\f]+(all|)[ \t\n\r\f]+":                 "union",
+		"(?i)[ \t\n\r\f]+left[ \t\n\r\f]+join[ \t\n\r\f]+":                    "left join",
+		"(?i)[ \t\n\r\f]+rigth[ \t\n\r\f]+join[ \t\n\r\f]+":                   "rigth join",
+		"(?i)[ \t\n\r\f]+cross[ \t\n\r\f]+join[ \t\n\r\f]+":                   "cross join",
+		"(?i)[ \t\n\r\f]+inner[ \t\n\r\f]+join[ \t\n\r\f]+":                   "inner join",
+		"(?i)[ \t\n\r\f]+full[ \t\n\r\f]+join[ \t\n\r\f]+":                    "full join",
 	}
 }

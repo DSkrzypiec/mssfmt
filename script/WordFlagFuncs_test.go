@@ -8,7 +8,7 @@ import (
 
 func TestCommentRemarkSimple(t *testing.T) {
 	rawS := read.RawScript{"x.sql", "./x.sql", sqlComment}
-	s := rawS.ToSQL()
+	s := ToSQL(rawS)
 
 	commIds := []int{0, 1, 2, 3, 4, 5, 6, 28, 29, 30, 41, 42, 43, 44, 45}
 	notComm := []int{8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18}
@@ -34,31 +34,31 @@ func TestIsMainKeyword(t *testing.T) {
 	rawS1 := read.RawScript{"x.sql", "./x.sql", sql1}
 	rawS2 := read.RawScript{"x.sql", "./x.sql", sql2}
 	rawS3 := read.RawScript{"x.sql", "./x.sql", sql3}
-	s1 := rawS1.ToSQL()
-	s2 := rawS2.ToSQL()
-	s3 := rawS3.ToSQL()
+	s1 := ToSQL(rawS1)
+	s2 := ToSQL(rawS2)
+	s3 := ToSQL(rawS3)
 
 	for wId, w := range s1.Words {
 		f := (*s1.Flags)[wId]
-		if (wId != 6 && wId < 10) && !f.IsMainKeyword {
+		if (wId != 6 && wId < 10) && !f.IsMainKeyword.Is {
 			t.Errorf("Supposed to be a keyword: %s\n", w)
 		}
 	}
 
 	for i := 10; i < 13; i++ {
-		if (*s1.Flags)[i].IsMainKeyword {
+		if (*s1.Flags)[i].IsMainKeyword.Is {
 			t.Errorf("%s shouldn't be a keyword.\n", s1.Words[6])
 		}
 	}
 
 	for i := 0; i < len(s2.Words)-1; i++ {
 		f := (*s2.Flags)[i]
-		if !f.IsMainKeyword {
+		if !f.IsMainKeyword.Is {
 			t.Errorf("Supposed to be a keyword: %s\n", s2.Words[i])
 		}
 	}
 
-	if (*s2.Flags)[len(s2.Words)-1].IsMainKeyword {
+	if (*s2.Flags)[len(s2.Words)-1].IsMainKeyword.Is {
 		t.Errorf("%s shouldn't be a keyword.\n", s2.Words[len(s2.Words)-1])
 	}
 
@@ -66,7 +66,7 @@ func TestIsMainKeyword(t *testing.T) {
 	real3Key := make([]int, 0, 25)
 
 	for wId, _ := range s3.Words {
-		if (*s3.Flags)[wId].IsMainKeyword {
+		if (*s3.Flags)[wId].IsMainKeyword.Is {
 			real3Key = append(real3Key, wId)
 		}
 	}
@@ -82,6 +82,30 @@ func TestIsMainKeyword(t *testing.T) {
 	}
 }
 
+func TestWordIdsInKeywords(t *testing.T) {
+	sql := `-- comment
+select  *   from tableName
+where  X = 1`
+
+	rawS := read.RawScript{"x.sql", "./x.sql", sql}
+	s := ToSQL(rawS)
+	flags := *s.Flags
+
+	wIds := []int{4, 11, 15} // select, from, where
+	keyStart := []int{3, 8, 14}
+	keyEnd := []int{6, 12, 17}
+
+	for i := 0; i < 3; i++ {
+		wStart := flags[wIds[i]].IsMainKeyword.WordIdStart
+		wEnd := flags[wIds[i]].IsMainKeyword.WordIdEnd
+
+		if wStart != keyStart[i] || wEnd != keyEnd[i] {
+			t.Errorf("Expected [%d, %d], got: [%d, %d]", keyStart[i],
+				keyEnd[i], wStart, wEnd)
+		}
+	}
+}
+
 func TestLineNumbers(t *testing.T) {
 	sql := `select top 10
 * from
@@ -91,7 +115,7 @@ x = 1
 --comm`
 
 	rawS := read.RawScript{"x.sql", "./x.sql", sql}
-	s := rawS.ToSQL()
+	s := ToSQL(rawS)
 	flags := *s.Flags
 
 	if flags[1].LineNumber != 1 {
@@ -113,7 +137,7 @@ from tableName t
 where t.X = 1`
 
 	rawS := read.RawScript{"x.sql", "./x.sql", sql}
-	s := rawS.ToSQL()
+	s := ToSQL(rawS)
 	flags := *s.Flags
 
 	if flags[0].CharIdStart != 0 || flags[0].CharIdEnd != 5 {

@@ -46,13 +46,13 @@ type WordFlag struct {
 // MainKeyword represents struct for keyword detection. If "Is" is true than
 // that word is a keyword. Keyword says which one. The Keyword filed is very
 // useful to not parse something like "  \t\n  Group   \t \n   by" into
-// "GROUP BY" phrase. Fields CharIdStart and CharIdEnd are the boundries of the
+// "GROUP BY" phrase. Fields WordIdStart and WordIdEnd are the boundries of the
 // keyword including whitespaces.
 type MainKeyword struct {
 	Is          bool
 	Keyword     string
-	CharIdStart int
-	CharIdEnd   int
+	WordIdStart int
+	WordIdEnd   int
 }
 
 // ToSQL method convertes RawScript into Script object.
@@ -61,11 +61,11 @@ func ToSQL(rs read.RawScript) SQL {
 	script := SQL{rs.Name, rs.FullPath, rs.Content,
 		stringF.SplitWithSep(rs.Content), &sFlags}
 
-	script.initFlags()
-	script.markMainKeywords()
-	script.markLineNumbers()
-	script.markLineIndentLvl()
-	script.markComments()
+	script.InitFlags()
+	script.MarkMainKeywords()
+	script.MarkLineNumbers()
+	script.MarkLineIndentLvl()
+	script.MarkComments()
 
 	return script
 }
@@ -79,7 +79,7 @@ func (s SQL) String() string {
 
 	for wId, word := range s.Words {
 		flags := (*s.Flags)[wId]
-		sb.WriteString(fmt.Sprintf("{%s} ", word))
+		sb.WriteString(fmt.Sprintf("[%d] {%s} ", wId, word))
 		sb.WriteString("{")
 
 		if flags.IsComment {
@@ -87,8 +87,8 @@ func (s SQL) String() string {
 		}
 		if flags.IsMainKeyword.Is {
 			sb.WriteString(fmt.Sprintf("keyword (%s(%d-%d)), ",
-				flags.IsMainKeyword.Keyword, flags.IsMainKeyword.CharIdStart,
-				flags.IsMainKeyword.CharIdEnd))
+				flags.IsMainKeyword.Keyword, flags.IsMainKeyword.WordIdStart,
+				flags.IsMainKeyword.WordIdEnd))
 		}
 
 		fStr := fmt.Sprintf("#Line=%d, Indent=%d, (%d, %d)", flags.LineNumber,

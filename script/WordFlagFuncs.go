@@ -6,15 +6,15 @@ import (
 	"strings"
 )
 
-// Method initFlags initialize ScriptFlags.
+// Method InitFlags initialize ScriptFlags.
 // This function is used during Script object creation.
-func (s *SQL) initFlags() {
+func (s *SQL) InitFlags() {
 	sFlags := make(ScriptFlags, len(s.Words))
 	*s.Flags = sFlags
 }
 
-// Method markLineNumbers assigns for each word it's line number.
-func (s *SQL) markLineNumbers() {
+// Method MarkLineNumbers assigns for each word it's line number.
+func (s *SQL) MarkLineNumbers() {
 	lineNumber := 1
 
 	for wordId, word := range s.Words {
@@ -40,9 +40,9 @@ func (s *SQL) markCharIds() {
 	}
 }
 
-// Method markAndFormatKeywords marks keywords in the script. Furthermore marks
+// Method MarkMainKeywords marks keywords in the script. Furthermore marks
 // KeywordEnd flag.
-func (s *SQL) markMainKeywords() {
+func (s *SQL) MarkMainKeywords() {
 	s.markCharIds()
 	mainKeywords := keywordsRegexpsForWSFormat()
 
@@ -57,16 +57,23 @@ func (s *SQL) markMainKeywords() {
 // FindAllStringIndex applied in script for main keyword regex.
 func (s *SQL) markIsMainKeyword(indexes [][]int, keyword string) {
 	for _, idx := range indexes {
+
 		for wId, flag := range *s.Flags {
 			if idx[0] == idx[1] && flag.CharIdStart >= idx[0] &&
 				flag.CharIdStart <= idx[1] {
+
+				wordIdStart := s.wordId(idx[0])
+				wordIdEnd := s.wordId(idx[1])
 				(*s.Flags)[wId].IsMainKeyword = MainKeyword{true, keyword,
-					idx[0], idx[1]}
+					wordIdStart, wordIdEnd}
 			}
 			if idx[0] < idx[1] && flag.CharIdStart >= idx[0] &&
 				flag.CharIdStart < idx[1] {
+
+				wordIdStart := s.wordId(idx[0])
+				wordIdEnd := s.wordId(idx[1] - 1)
 				(*s.Flags)[wId].IsMainKeyword = MainKeyword{true, keyword,
-					idx[0], idx[1]}
+					wordIdStart, wordIdEnd}
 			}
 			if flag.CharIdStart > idx[1] {
 				break
@@ -75,10 +82,25 @@ func (s *SQL) markIsMainKeyword(indexes [][]int, keyword string) {
 	}
 }
 
-// Function markComments determines whenever current word in the script is
+// CharId to WordId translator. If given charId couldn't be found that -1 is
+// returned.
+func (s *SQL) wordId(charId int) int {
+	for wId, f := range *s.Flags {
+		if f.CharIdStart == f.CharIdEnd && charId == f.CharIdStart {
+			return wId
+		}
+		if f.CharIdStart < f.CharIdEnd && charId >= f.CharIdStart &&
+			charId < f.CharIdEnd {
+			return wId
+		}
+	}
+	return -1
+}
+
+// Function MarkComments determines whenever current word in the script is
 // comment or not. It updates scripts Flags. This function is used during
 // creating Script from RawScript.
-func (s *SQL) markComments() {
+func (s *SQL) MarkComments() {
 	isGlobalComment := false
 	isLineComment := false
 
@@ -111,11 +133,11 @@ func (s *SQL) markComments() {
 	}
 }
 
-// Method markLineIndentLvl marks, for each word, flag "LineIndentLvl". That
+// Method MarkLineIndentLvl marks, for each word, flag "LineIndentLvl". That
 // means it assign for each word in the line it's level of indentation <=>
 // number of TABs at the front of line.
-func (s *SQL) markLineIndentLvl() {
-	linesIndentLvls := s.lineIndentDepth()
+func (s *SQL) MarkLineIndentLvl() {
+	linesIndentLvls := s.LineIndentDepth()
 
 	for wId, wFlag := range *s.Flags {
 		ll, ok := linesIndentLvls[wFlag.LineNumber]
@@ -141,7 +163,7 @@ func (s *SQL) markLineIndentLvl() {
 // [6.]			t.A = 1
 //
 // Method returns {1:0, 2:1, 3:0, 4:1, 5:0, 6:2}
-func (s *SQL) lineIndentDepth() map[int]int {
+func (s *SQL) LineIndentDepth() map[int]int {
 	lineDepth := make(map[int]int, 0)
 
 	for id, e := range strings.Split(s.RawContent, "\n") {
