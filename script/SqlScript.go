@@ -26,21 +26,27 @@ type ScriptFlags []WordFlag
 // Those flags can be updated but in main scenario each flag is set once during
 // creation of Script object.
 //
+// IsComment - bool flag for being inside a comment.
+//
 // IsMainKeyword - main T-SQL keywords like SELECT, GROUP BY, etc.
 // full list of main keywords can be found in (read/KeywordsRegexp.go).
 //
 // LineNumber - number of line containing this word.
 //
-// CharIdStart - TODO: description
+// CharIdStart - Start index of this word in the RawContent
 //
-// CharIdEnd - TODO: description
+// CharIdEnd - End index of this word in the RawContent
+//
+// SelectList - Flag for being element of SELECT list of columns and expresions
+//
 type WordFlag struct {
 	IsComment     bool
 	IsMainKeyword MainKeyword
 	LineNumber    int
 	LineIndentLvl int
-	CharIdStart   int // Start index of this word in the RawContent
-	CharIdEnd     int // End index of this word in the RawContent
+	CharIdStart   int
+	CharIdEnd     int
+	SelectList    SelectColList
 }
 
 // MainKeyword represents struct for keyword detection. If "Is" is true than
@@ -51,6 +57,15 @@ type WordFlag struct {
 type MainKeyword struct {
 	Is          bool
 	Keyword     string
+	WordIdStart int
+	WordIdEnd   int
+}
+
+// SelectColList is one of word flags which represents being in SELECT list of
+// column names and expressions. Everthing between SELECT or SELECT TOP [n] and
+// FROM or INTO is SelectColList.
+type SelectColList struct {
+	Is          bool
 	WordIdStart int
 	WordIdEnd   int
 }
@@ -68,6 +83,39 @@ func ToSQL(rs read.RawScript) SQL {
 	script.MarkComments()
 
 	return script
+}
+
+// Replace method replaces words and its flags from word number wIdFrom until
+// wIdTo from SQL script. Replacement can be any size. Words and flags to be
+// replaced must have the same length. This method replaces words, flags and
+// updates RowContent based on new words. It should be usually used to
+// formatting the script.
+func (s *SQL) Replace(wIdFrom, wIdTo int, newWords []string,
+	newFlags ScriptFlags) {
+	maxSize := len(s.Words) + len(newWords)
+	words := make([]string, 0, maxSize)
+	flags := make(ScriptFlags, 0, maxSize)
+	newWordsAdded := false
+
+	for wId, word := range s.Words {
+		if !newWordsAdded && wId >= wIdFrom && wId <= wIdTo {
+			for nwId, newWord := range newWords {
+				words = append(words, newWord)
+				flags = append(flags, newFlags[nwId])
+			}
+			newWordsAdded = true
+		}
+		if newWordsAdded && wId >= wIdFrom && wId <= wIdTo {
+			continue
+		}
+
+		words = append(words, word)
+		flags = append(flags, (*s.Flags)[wId])
+	}
+
+	s.Words = words
+	s.Flags = &flags
+	s.RawContent = strings.Join(words, "")
 }
 
 // String method returns Script in form of all words and its flags. This
@@ -89,6 +137,10 @@ func (s SQL) String() string {
 			sb.WriteString(fmt.Sprintf("keyword (%s(%d-%d)), ",
 				flags.IsMainKeyword.Keyword, flags.IsMainKeyword.WordIdStart,
 				flags.IsMainKeyword.WordIdEnd))
+		}
+
+		if flags.SelectList.Is {
+			sb.WriteString("SELECT colList, ")
 		}
 
 		fStr := fmt.Sprintf("#Line=%d, Indent=%d, (%d, %d)", flags.LineNumber,

@@ -31,7 +31,7 @@ func (s *SQL) MarkLineNumbers() {
 // Example: For script content "select top 10 * from table"
 // Words[0] = "select" {CharIdStart = 0, CharIdEnd = 5}
 // Words[1] = " " {CharIdStart = 6, CharIdEnd = 6}
-func (s *SQL) markCharIds() {
+func (s *SQL) MarkCharIds() {
 	charId := -1
 	for wId, word := range s.Words {
 		(*s.Flags)[wId].CharIdStart = charId + 1
@@ -43,7 +43,7 @@ func (s *SQL) markCharIds() {
 // Method MarkMainKeywords marks keywords in the script. Furthermore marks
 // KeywordEnd flag.
 func (s *SQL) MarkMainKeywords() {
-	s.markCharIds()
+	s.MarkCharIds()
 	mainKeywords := keywordsRegexpsForWSFormat()
 
 	for keywordRegexp, keyword := range mainKeywords {
@@ -183,4 +183,75 @@ func calcLineDepth(line string) int {
 		depth += 1
 	}
 	return depth
+}
+
+// MarkSelectList method marks the SELECT column list.
+func (s *SQL) MarkSelectList() {
+	starts := s.findSelectListStarts()
+	ends := s.findSelectListEnds()
+	startEndMap := matchStartAndEnds(starts, ends)
+
+	for startId, endId := range startEndMap {
+		for i := startId; i <= endId; i++ {
+			(*s.Flags)[i].SelectList = SelectColList{true, startId, endId}
+		}
+	}
+}
+
+// Method findSelectListStarts finds and returns ids of words which starts
+// select column list in SQL script.
+func (s *SQL) findSelectListStarts() []int {
+	startIds := make([]int, 0)
+
+	for wId, wFlag := range *s.Flags {
+		if wId == 0 {
+			continue
+		}
+
+		isPrevSelect := (*s.Flags)[wId-1].IsMainKeyword.Keyword == "select"
+		if isPrevSelect && (!wFlag.IsMainKeyword.Is ||
+			wFlag.IsMainKeyword.Keyword != "select") {
+			startIds = append(startIds, wId)
+		}
+	}
+
+	return startIds
+}
+
+// Method fundSelectListEnds finds and returns ids of words which ends select
+// column list in SQL script.
+func (s *SQL) findSelectListEnds() []int {
+	endIds := make([]int, 0)
+
+	for wId, wFlag := range *s.Flags {
+		if wId == 0 {
+			continue
+		}
+
+		isIntoKeyword := strings.ToLower(s.Words[wId]) == "into"
+		isFromKeyword := wFlag.IsMainKeyword.Keyword == "from"
+
+		if !wFlag.IsComment && (isIntoKeyword || isFromKeyword) {
+			endIds = append(endIds, wId-1)
+		}
+	}
+
+	return endIds
+}
+
+// This function matches start and ends and returns it in form of map of startId
+// onto endIds.
+func matchStartAndEnds(starts, ends []int) map[int]int {
+	matches := make(map[int]int)
+
+	for _, startId := range starts {
+		for _, endId := range ends {
+			if endId >= startId {
+				// takes first endId after startId
+				matches[startId] = endId
+				break
+			}
+		}
+	}
+	return matches
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"mssfmt/format"
+
 	"mssfmt/read"
 	"mssfmt/script"
 )
@@ -37,4 +38,5 @@ func ReadFormatAndSave(pathRead, pathWrite string) {
 	format.ApplyFormats(&script, formats)
 
 	fmt.Println(script.RawContent)
+	//fmt.Println(script)
 }
