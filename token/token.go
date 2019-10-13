@@ -3,6 +3,8 @@
 // parsing Go language.
 package token
 
+import "strconv"
+
 // Token is the set of lexical tokens on T-SQL.
 // TODO: extend Token. For now (2019-10-13) Token is limited to basic SELECT
 // queries.
@@ -40,6 +42,24 @@ const (
 	THEN
 	END
 	keywordEnd
+
+	aggFuncsBeg
+	APPROX_COUNT_DISTINCT
+	AVG
+	CHECKSUM_AGG
+	COUNT
+	COUNT_BIG
+	GROUPING
+	GROUPING_ID
+	MAX
+	MIN
+	STDEV
+	STDEVP
+	STRING_AGG
+	SUM
+	VAR
+	VARP
+	aggFuncsEnd
 
 	operatorBeg
 	// Operators in T-SQL
@@ -104,6 +124,22 @@ var tokens = [...]string{
 	WHEN:      "WHEN",
 	THEN:      "THEN",
 	END:       "END",
+
+	APPROX_COUNT_DISTINCT: "APPROX_COUNT_DISTINCT",
+	AVG:                   "AVG",
+	CHECKSUM_AGG:          "CHECKSUM_AGG",
+	COUNT:                 "COUNT",
+	COUNT_BIG:             "COUNT_BIG",
+	GROUPING:              "GROUPING",
+	GROUPING_ID:           "GROUPING_ID",
+	MAX:                   "MAX",
+	MIN:                   "MIN",
+	STDEV:                 "STDEV",
+	STDEVP:                "STDEVP",
+	STRING_AGG:            "STRING_AGG",
+	SUM:                   "SUM",
+	VAR:                   "VAR",
+	VARP:                  "VARP",
 
 	ADD: "+",
 	SUB: "-",
@@ -185,6 +221,11 @@ func (t Token) IsLiteral() bool {
 // IsKeyword returns true for tokens which are defined as keywords.
 func (t Token) IsKeyword() bool {
 	return keywordBeg < t && t < keywordEnd
+}
+
+// IsAggFunc returns true for tokens which are defined as aggregation functions.
+func (t Token) IsAggFunc() bool {
+	return aggFuncsBeg < t && t < aggFuncsEnd
 }
 
 // IsOperator returns true for tokens which are defined as operator.
