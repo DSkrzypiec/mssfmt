@@ -1,10 +1,15 @@
 package token
 
+// TODO...
 type Position struct {
 	FileName string
 	Line     int // starting at 1
 	Column   int // starting at 1
+	Offset   int // wordId, starting at 0
 }
+
+// TODO: think about it
+type Pos int
 
 // IsValid method checks if Position is legal.
 func (pos Position) IsValid() bool {
