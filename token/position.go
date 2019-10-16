@@ -1,5 +1,7 @@
 package token
 
+import "strconv"
+
 // TODO...
 type Position struct {
 	FileName string
@@ -19,10 +21,11 @@ func (pos Position) IsValid() bool {
 // String representation of token Position.
 func (pos Position) String() string {
 	if pos.IsValid() && pos.FileName == "" {
-		return pos.Line + ":" + pos.Column
+		return strconv.Itoa(pos.Line) + ":" + strconv.Itoa(pos.Column)
 	}
 	if pos.IsValid() {
-		return pos.FileName + ":" + pos.Line + ":" + pos.Column
+		return pos.FileName + ":" + strconv.Itoa(pos.Line) + ":" +
+			strconv.Itoa(pos.Column)
 	}
 	return ""
 }
