@@ -5,10 +5,7 @@ import (
 	"log"
 	"os"
 
-	"mssfmt/format"
-
 	"mssfmt/read"
-	"mssfmt/script"
 )
 
 func main() {
@@ -24,19 +21,9 @@ func main() {
 		outputPath = args[1]
 	}
 
-	ReadFormatAndSave(args[0], outputPath)
-}
-
-func ReadFormatAndSave(pathRead, pathWrite string) {
-	scriptRaw, readErr := read.SQLScript(pathRead)
+	scriptRaw, readErr := read.SQLScript(outputPath)
 	if readErr != nil {
 		log.Panic(readErr)
 	}
-
-	script := script.ToSQL(scriptRaw)
-	formats := format.BuildFormatsRepo()
-	format.ApplyFormats(&script, formats)
-
-	fmt.Println(script.RawContent)
-	//fmt.Println(script)
+	fmt.Println(scriptRaw)
 }

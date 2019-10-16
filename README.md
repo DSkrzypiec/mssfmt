@@ -6,12 +6,13 @@ Tool for T-SQL (Microsoft SQL Server) automatic code format.
 
 This tool takes T-SQL script(s) (single or whole catalog) and rewrite it similar
 to Go's `go fmt` which is a tool for automatically formats Go code.
-This `mssfmt` tool is meant to be as simple as `go fmt`. In opposite to `gm fmt`
-`mssfmt` doesn't create abstract syntax tree of T-SQL it rather performs series
-of regexps and transformation to prettify the source file. 
+This `mssfmt` tool is meant to be as simple as `go fmt`. Internals of this tool
+is also similar to `go fmt` - it produces
+[AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree) of T-SQL to rewrite
+the file.
 
 We are in early stage of developing this tool, please do not use this while serious
-developing yet.
+developing yet. It's not even done yet. Feel free to contribute.
 
 `mssfmt` is developed in `Go` therefore it is cross-platform and can be used
 outside of Windows (in case you have SQL Server on your Linux server).
@@ -22,6 +23,12 @@ On Windows:
 
 ```
 mssfmt.exe InputTSqlScript.sql
+```
+
+On Linux:
+
+```
+./mssfmt InputTSqlScript.sql
 ```
 
 ### Installing
