@@ -13,6 +13,7 @@ type Scanner struct {
 	char     rune   // current character
 	offset   int    // character offset
 	rdOffset int    // reading offset - position after current char
+	line     int    // number of current line, starting at 1
 }
 
 // TODO...
@@ -29,6 +30,7 @@ func (s *Scanner) Init(fName string, src []byte) {
 	s.char = ' '
 	s.offset = 0
 	s.rdOffset = 0
+	s.line = 1
 
 	s.next()
 	if s.char == bom {
@@ -43,6 +45,8 @@ func (s *Scanner) next() {
 		s.offset = s.rdOffset
 		r := rune(s.source[s.rdOffset])
 		w := 1
+
+		// TODO: include line offset
 
 		switch {
 		case r == 0:
@@ -71,4 +75,15 @@ func (s *Scanner) skipWhitespace() {
 	for s.char == ' ' || s.char == '\t' || s.char == '\n' || s.char == '\r' {
 		s.next()
 	}
+}
+
+// Method peek returns the byte following the most recently read character without
+// advancing the scanner. If the scanner is at EOF, peek returns 0.
+// This method is copied from Go scanner package from standard library -
+// scanner/scanner.go - #line 88-95.
+func (s *Scanner) peek() byte {
+	if s.rdOffset < len(s.source) {
+		return s.source[s.rdOffset]
+	}
+	return 0
 }

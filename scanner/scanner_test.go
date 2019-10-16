@@ -30,3 +30,18 @@ func TestSkipWhitespace(t *testing.T) {
 	}
 
 }
+
+func TestPeek(t *testing.T) {
+	src := []byte("SELECT")
+	var s Scanner
+	s.Init("s1", src)
+
+	if string(s.peek()) != "E" {
+		t.Errorf("Expected 'E', got: '%s'", string(s.peek()))
+	}
+
+	s.next()
+	if string(s.peek()) != "L" {
+		t.Errorf("Expected 'L', got: '%s'", string(s.peek()))
+	}
+}
