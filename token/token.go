@@ -85,15 +85,17 @@ const (
 	ALL
 	LIKE
 	SOME
-	LPAREN    // (
-	LBRACK    // [
-	LBRACE    // {
-	RPAREN    // )
-	RBRACK    // ]
-	RBRACE    // }
-	COMMA     // ,
-	PERIOD    // .
-	SEMICOLON // ;
+	LPAREN       // (
+	LBRACK       // [
+	LBRACE       // {
+	RPAREN       // )
+	RBRACK       // ]
+	RBRACE       // }
+	COMMA        // ,
+	PERIOD       // .
+	SEMICOLON    // ;
+	SINGLEQUOTE  // '
+	DOUBLEQUOTES // "
 	operatorEnd
 )
 
@@ -150,28 +152,30 @@ var tokens = [...]string{
 	OR:  "OR",
 	NOT: "NOT",
 
-	ASSIGN:    "=",
-	EQL:       "=",
-	NEQ:       "!=",
-	LSS:       "<",
-	GTR:       ">",
-	LEQ:       "<=",
-	GEQ:       ">=",
-	IN:        "IN",
-	BETWEEN:   "BETWEEN",
-	ANY:       "ANY",
-	ALL:       "ALL",
-	LIKE:      "LIKE",
-	SOME:      "SOME",
-	LPAREN:    "(",
-	LBRACK:    "[",
-	LBRACE:    "{",
-	RPAREN:    ")",
-	RBRACK:    "]",
-	RBRACE:    "}",
-	COMMA:     ",",
-	PERIOD:    ".",
-	SEMICOLON: ";",
+	ASSIGN:       "=",
+	EQL:          "=",
+	NEQ:          "!=",
+	LSS:          "<",
+	GTR:          ">",
+	LEQ:          "<=",
+	GEQ:          ">=",
+	IN:           "IN",
+	BETWEEN:      "BETWEEN",
+	ANY:          "ANY",
+	ALL:          "ALL",
+	LIKE:         "LIKE",
+	SOME:         "SOME",
+	LPAREN:       "(",
+	LBRACK:       "[",
+	LBRACE:       "{",
+	RPAREN:       ")",
+	RBRACK:       "]",
+	RBRACE:       "}",
+	COMMA:        ",",
+	PERIOD:       ".",
+	SEMICOLON:    ";",
+	SINGLEQUOTE:  "'",
+	DOUBLEQUOTES: `"`,
 }
 
 // String method returns string of token t. For GROUPBY it would be "GROUP BY"
