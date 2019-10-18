@@ -2,10 +2,12 @@ package scanner
 
 import (
 	"mssfmt/token"
+	"unicode"
 	"unicode/utf8"
 )
 
 const bom = 0xFEFF // byte order mark, only permitted as very first character
+const doubleQuote = 34
 
 type Scanner struct {
 	fileName string
@@ -13,7 +15,6 @@ type Scanner struct {
 	char     rune   // current character
 	offset   int    // character offset
 	rdOffset int    // reading offset - position after current char
-	line     int    // number of current line, starting at 1
 }
 
 // TODO...
@@ -30,7 +31,6 @@ func (s *Scanner) Init(fName string, src []byte) {
 	s.char = ' '
 	s.offset = 0
 	s.rdOffset = 0
-	s.line = 1
 
 	s.next()
 	if s.char == bom {
@@ -45,8 +45,6 @@ func (s *Scanner) next() {
 		s.offset = s.rdOffset
 		r := rune(s.source[s.rdOffset])
 		w := 1
-
-		// TODO: include line offset
 
 		switch {
 		case r == 0:
@@ -86,4 +84,65 @@ func (s *Scanner) peek() byte {
 		return s.source[s.rdOffset]
 	}
 	return 0
+}
+
+// Method scanIdentifier scans T-SQL identifiers. Including regular one and
+// delimited identifiers. Keywords and function names are just special case of
+// identifiers.
+func (s *Scanner) scanIdentifier() string {
+	startOffset := s.offset
+	if s.char == '[' {
+		for s.char != ']' {
+			s.next()
+		}
+		s.next()
+		return string(s.source[startOffset:s.offset])
+	}
+
+	if s.char == doubleQuote {
+		s.next()
+		for s.char != doubleQuote {
+			s.next()
+		}
+		s.next()
+		return string(s.source[startOffset:s.offset])
+	}
+
+	if isLetter(s.char) {
+		for isLetter(s.char) || isDigit(s.char) || isSpecialInsideIden(s.char) {
+			s.next()
+		}
+		return string(s.source[startOffset:s.offset])
+	}
+	return ""
+}
+
+func isSpecialInsideIden(char rune) bool {
+	return char == '_' || char == '@' || char == '#'
+}
+
+func isLetter(char rune) bool {
+	return 'a' <= lower(char) && lower(char) <= 'z' || char == '_' ||
+		char >= utf8.RuneSelf && unicode.IsLetter(char)
+}
+
+func isDigit(char rune) bool {
+	return isDecimal(char) || char >= utf8.RuneSelf && unicode.IsDigit(char)
+}
+
+func isDecimal(char rune) bool {
+	return '0' <= char && char <= '9'
+}
+
+func isWhitespace(char rune) bool {
+	return char == ' ' || char == '\t' || char == '\n' || char == '\r'
+}
+
+func isHex(char rune) bool {
+	return '0' <= char && char <= '9' || 'a' <= lower(char) && lower(char) <= 'f'
+}
+
+// returns lower-case char iff ch is ASCII letter
+func lower(char rune) rune {
+	return ('a' - 'A') | char
 }
