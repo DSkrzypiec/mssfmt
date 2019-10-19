@@ -188,6 +188,22 @@ func (t Token) String() string {
 	return "token_" + strconv.Itoa(int(t))
 }
 
+var aggFuncNames map[string]Token
+var keywords map[string]Token
+
+// Function init creates mainKeywords and keywords global package maps.
+func init() {
+	keywords = make(map[string]Token)
+	for i := keywordBeg + 1; i < keywordEnd; i++ {
+		keywords[tokens[i]] = Token(i)
+	}
+
+	aggFuncNames = make(map[string]Token)
+	for i := aggFuncsBeg + 1; i < aggFuncsEnd; i++ {
+		aggFuncNames[tokens[i]] = Token(i)
+	}
+}
+
 // Ranges for precedence ranges for operators in T-SQL.
 const (
 	LowestPrec  = 0
@@ -215,6 +231,25 @@ func (oper Token) Precedence() int {
 		return 7
 	}
 	return LowestPrec
+}
+
+// KeywordLookup search for keyword Token based on given identifier.
+func KeywordLookup(identifier string) Token {
+	tok, isKeyword := keywords[identifier]
+	if isKeyword {
+		return tok
+	}
+	return IDENT
+}
+
+// AggFuncLookup search for aggregation function name Token based on given
+// identifier.
+func AggFuncLookup(identifier string) Token {
+	tok, isAggFuncName := aggFuncNames[identifier]
+	if isAggFuncName {
+		return tok
+	}
+	return IDENT
 }
 
 // IsLiteral returns true for tokens which are defined as literals.
