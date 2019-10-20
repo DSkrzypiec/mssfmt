@@ -5,16 +5,23 @@ import (
 )
 
 func TestScanSQLString(t *testing.T) {
-	src := []byte("'stringValue'  'with '' escape'   'Cox'''")
+	src := []byte("'''Test' 'stringValue'  'with '' escape'   'Cox''' ''")
 	var s Scanner
 	s.Init("s", src)
 
+	string0 := s.scanSQLString()
+	s.skipWhitespace()
 	string1 := s.scanSQLString()
 	s.skipWhitespace()
 	string2 := s.scanSQLString()
 	s.skipWhitespace()
 	string3 := s.scanSQLString()
+	s.skipWhitespace()
+	string4 := s.scanSQLString()
 
+	if string0 != "'''Test'" {
+		t.Errorf("Expected '''Test', got: %s", string0)
+	}
 	if string1 != "'stringValue'" {
 		t.Errorf("Expected 'stringValue', got: %s", string1)
 	}
@@ -23,6 +30,9 @@ func TestScanSQLString(t *testing.T) {
 	}
 	if string3 != "'Cox'''" {
 		t.Errorf("Expected 'Cos''', got: %s", string3)
+	}
+	if string4 != "''" {
+		t.Errorf("Expected '', got: %s", string4)
 	}
 }
 

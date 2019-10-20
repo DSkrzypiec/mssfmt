@@ -122,7 +122,26 @@ func (s *Scanner) scanIdentifier() string {
 // and closing single quote - '. It also includes single quote escapement which
 // in T-SQL occurs as double single quote - ''.
 func (s *Scanner) scanSQLString() string {
-	return "TODO"
+	startOffset := s.offset
+
+	for {
+		s.next()
+		if s.isEscapedSQ() {
+			s.next()
+			s.next()
+		}
+		if s.char == singleQuote && !s.isEscapedSQ() {
+			s.next()
+			break
+		}
+	}
+	return string(s.source[startOffset:s.offset])
+}
+
+// Method isEscapedSQ verifies if current character (s.char) is escaped single
+// quote inside T-SQL string.
+func (s *Scanner) isEscapedSQ() bool {
+	return s.char == singleQuote && s.peek() == singleQuote
 }
 
 func isSpecialInsideIden(char rune) bool {
