@@ -4,6 +4,28 @@ import (
 	"testing"
 )
 
+func TestScanSQLString(t *testing.T) {
+	src := []byte("'stringValue'  'with '' escape'   'Cox'''")
+	var s Scanner
+	s.Init("s", src)
+
+	string1 := s.scanSQLString()
+	s.skipWhitespace()
+	string2 := s.scanSQLString()
+	s.skipWhitespace()
+	string3 := s.scanSQLString()
+
+	if string1 != "'stringValue'" {
+		t.Errorf("Expected 'stringValue', got: %s", string1)
+	}
+	if string2 != "'with '' escape'" {
+		t.Errorf("Expected 'with '' escape', got: %s", string2)
+	}
+	if string3 != "'Cox'''" {
+		t.Errorf("Expected 'Cos''', got: %s", string3)
+	}
+}
+
 func TestIdentifierMany(t *testing.T) {
 	src1 := []byte("       GOSIA    \t DamiansTable\n")
 	var s Scanner

@@ -6,8 +6,9 @@ import (
 	"unicode/utf8"
 )
 
-const bom = 0xFEFF // byte order mark, only permitted as very first character
-const doubleQuote = 34
+const bom = 0xFEFF     // byte order mark, only permitted as very first character
+const singleQuote = 39 // value for single quote character
+const doubleQuote = 34 // value for double quote character
 
 type Scanner struct {
 	fileName string
@@ -115,6 +116,13 @@ func (s *Scanner) scanIdentifier() string {
 		return string(s.source[startOffset:s.offset])
 	}
 	return ""
+}
+
+// Method scanSQLString scans T-SQL string literal. Result also includes opening
+// and closing single quote - '. It also includes single quote escapement which
+// in T-SQL occurs as double single quote - ''.
+func (s *Scanner) scanSQLString() string {
+	return "TODO"
 }
 
 func isSpecialInsideIden(char rune) bool {
