@@ -120,7 +120,8 @@ func (s *Scanner) scanIdentifier() string {
 
 // Method scanSQLString scans T-SQL string literal. Result also includes opening
 // and closing single quote - '. It also includes single quote escapement which
-// in T-SQL occurs as double single quote - ''.
+// in T-SQL occurs as double single quote - ''. This metod assumes that the
+// opening single quote was already scanned.
 func (s *Scanner) scanSQLString() string {
 	startOffset := s.offset
 
@@ -136,6 +137,27 @@ func (s *Scanner) scanSQLString() string {
 		}
 	}
 	return string(s.source[startOffset:s.offset])
+}
+
+// Method scanNumber scans number literals. It includes integers, floats and
+// decimals, scientific notation and hexidecimal format (TODO). This method
+// assumes that s.char is a digit.
+func (s *Scanner) scanNumber() (token.Token, string) {
+	startOffset := s.offset
+	var tok token.Token = token.INT
+
+	for {
+		s.next()
+		if !isDigit(s.char) && s.char != '.' && s.char != 'e' &&
+			s.char != 'E' && s.char != '+' && s.char != '-' {
+			break
+		}
+
+		if s.char == '.' {
+			tok = token.FLOAT
+		}
+	}
+	return tok, string(s.source[startOffset:s.offset])
 }
 
 // Method isEscapedSQ verifies if current character (s.char) is escaped single

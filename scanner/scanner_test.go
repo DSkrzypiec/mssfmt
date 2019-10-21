@@ -1,9 +1,48 @@
 package scanner
 
 import (
+	"mssfmt/token"
 	"testing"
 )
 
+// Test for scanning numbers in T-SQL.
+func TestScanNumber(t *testing.T) {
+	src := []byte("42 512 3.1459 -2.1234 0 2.1324e-5")
+	var s Scanner
+	s.Init("s", src)
+
+	toks := make([]token.Token, 0, 6)
+	nums := make([]string, 0, 6)
+	expToks := []token.Token{token.INT, token.INT, token.FLOAT, token.FLOAT,
+		token.INT, token.FLOAT}
+	expNums := []string{"42", "512", "3.1459", "-2.1234", "0", "2.1324e-5"}
+
+	for i := 0; i < 6; i++ {
+		t, n := s.scanNumber()
+		toks = append(toks, t)
+		nums = append(nums, n)
+		s.skipWhitespace()
+	}
+
+	if len(toks) != len(expToks) {
+		t.Errorf("Expected %d tokens, got %d tokens", len(expToks), len(toks))
+	}
+	if len(nums) != len(expNums) {
+		t.Errorf("Expected %d numbers, got %d numbers", len(expNums), len(nums))
+	}
+
+	for i := 0; i < 6; i++ {
+		if toks[i] != expToks[i] {
+			t.Errorf("For token %d, expected %d, got %d", i, expToks[i], toks[i])
+		}
+		if nums[i] != expNums[i] {
+			t.Errorf("For token %d, expected number %s, got %s", i, expNums[i], nums[i])
+		}
+	}
+
+}
+
+// Test for scanning SQL strings.
 func TestScanSQLString(t *testing.T) {
 	src := []byte("'''Test' 'stringValue'  'with '' escape'   'Cox''' ''")
 	var s Scanner
@@ -36,6 +75,7 @@ func TestScanSQLString(t *testing.T) {
 	}
 }
 
+// Test for scanning several identifiers.
 func TestIdentifierMany(t *testing.T) {
 	src1 := []byte("       GOSIA    \t DamiansTable\n")
 	var s Scanner

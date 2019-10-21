@@ -17,7 +17,7 @@ const (
 	literalBeg
 	IDENT  // ColName, TableName, CTEName, ...
 	INT    // 53421
-	FLOAT  // 123.123
+	FLOAT  // 123.123, 4321.123e-3
 	STRING // 'Value'
 	AS     // ColName AS cn
 	literalEnd
