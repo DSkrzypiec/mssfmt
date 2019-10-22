@@ -12,6 +12,7 @@ type Token int
 
 const (
 	EOF = iota
+	ILLEGAL
 	COMMENT
 
 	literalBeg
@@ -19,13 +20,13 @@ const (
 	INT    // 53421
 	FLOAT  // 123.123, 4321.123e-3
 	STRING // 'Value'
-	AS     // ColName AS cn
 	literalEnd
 
 	keywordBeg
 	// T-SQL keywords
 	SELECT
 	TOP
+	AS
 	FROM
 	WHERE
 	GROUPBY  // GROUP BY

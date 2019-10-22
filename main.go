@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"mssfmt/read"
+	"mssfmt/scanner"
+	"mssfmt/token"
 )
 
 func main() {
@@ -25,5 +27,15 @@ func main() {
 	if readErr != nil {
 		log.Panic(readErr)
 	}
-	fmt.Println(scriptRaw)
+
+	var scriptScanner scanner.Scanner
+	scriptScanner.Init(outputPath, []byte(scriptRaw.Content))
+
+	for {
+		tok, lit := scriptScanner.Scan()
+		if tok == token.EOF {
+			break
+		}
+		fmt.Printf("[%s] %s \n", tok, lit)
+	}
 }

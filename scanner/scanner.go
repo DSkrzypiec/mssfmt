@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"mssfmt/token"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -19,9 +20,66 @@ type Scanner struct {
 }
 
 // TODO...
-func (s *Scanner) Scan() (token.Pos, token.Token, string) {
-	// MAIN METHOD
-	return 0, token.AND, ""
+func (s *Scanner) Scan() (token.Token, string) {
+	var tok token.Token
+	var literal string
+	s.skipWhitespace()
+
+	switch ch := s.char; {
+	case isLetter(ch):
+		literal = s.scanIdentifier()
+		if len(literal) > 1 {
+			tok = token.KeywordLookup(strings.ToUpper(literal))
+
+			if tok == token.IDENT {
+				tok = token.AggFuncLookup(strings.ToUpper(literal))
+			}
+			return tok, literal
+		} else {
+			return token.IDENT, literal
+		}
+
+	case isDigit(ch) || (ch == '.' && isDigit(rune(s.peek()))) ||
+		((ch == '-' || ch == '+') && isDigit(rune(s.peek()))):
+		return s.scanNumber()
+	case ch == '-' && s.peek() == '-':
+		return token.COMMENT, s.scanLineComment()
+	case ch == '/' && s.peek() == '*':
+		return token.COMMENT, s.scanBlockComment()
+	default:
+		s.next()
+		switch ch {
+		case -1:
+			return token.EOF, ""
+		case singleQuote:
+			return token.STRING, s.scanSQLString()
+		case '+':
+			return token.ADD, ""
+		case '-':
+			return token.SUB, ""
+		case '*':
+			return token.MUL, ""
+		case '/':
+			return token.DIV, ""
+		case '%':
+			return token.MOD, ""
+		case '=':
+			return token.ASSIGN, ""
+		case '.':
+			return token.PERIOD, ""
+		case ',':
+			return token.COMMA, ""
+		case ';':
+			return token.SEMICOLON, ""
+		case '(':
+			return token.LPAREN, ""
+		case ')':
+			return token.RPAREN, ""
+		default:
+			return token.ILLEGAL, ""
+		}
+	}
+	return token.ILLEGAL, ""
 }
 
 // Init method prepares Scanner for start of the source file for scanning its
@@ -158,6 +216,40 @@ func (s *Scanner) scanNumber() (token.Token, string) {
 		}
 	}
 	return tok, string(s.source[startOffset:s.offset])
+}
+
+// Method scanLineComment scans line comment in T-SQL which starts from "--" and
+// ends at line break. This method assumes that s.char == '-' and s.peek() ==
+// '-', so it's a line comment start.
+func (s *Scanner) scanLineComment() string {
+	startOffset := s.offset
+
+	for s.char != '\n' && s.char != '\r' {
+		s.next()
+	}
+	return string(s.source[startOffset:s.offset])
+}
+
+// Method scanBlockComment scans block comment in T-SQL which starts from "/*"
+// and ends at "*/". Block comments in T-SQL supports nested block comments.
+// This method assumes that it's on start of block comment - s.char == '/' &&
+// s.peek() == '*'.
+func (s *Scanner) scanBlockComment() string {
+	startOffset := s.offset
+	nestingLvl := 1
+
+	for !(s.char == '*' && s.peek() == '/' && nestingLvl == 0) {
+		s.next()
+		if s.char == '/' && s.peek() == '*' {
+			nestingLvl++
+		}
+		if s.char == '*' && s.peek() == '/' && nestingLvl > 0 {
+			nestingLvl--
+		}
+	}
+	s.next() // to accumulate closing "*/"
+	s.next() // to accumulate closing "*/"
+	return string(s.source[startOffset:s.offset])
 }
 
 // Method isEscapedSQ verifies if current character (s.char) is escaped single

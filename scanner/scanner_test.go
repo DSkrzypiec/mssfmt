@@ -1,9 +1,93 @@
 package scanner
 
 import (
+	"fmt"
 	"mssfmt/token"
 	"testing"
 )
+
+// TODO: Transform into real unit test.
+func TestFirstScan(t *testing.T) {
+	src := []byte(` Select
+	x.A,	--some comment here
+	x.ColName,  /* another comment /*
+	-- */
+	*/
+	(154.12 + 5412) * 4.2 as Crap
+fRoM
+	tableName x `)
+
+	var s Scanner
+	s.Init("s", src)
+	fmt.Println(string(src))
+	fmt.Println("After scanning:")
+
+	for {
+		tok, lit := s.Scan()
+		if tok == token.EOF {
+			break
+		}
+		fmt.Printf("[%s] %s \n", tok, lit)
+	}
+}
+
+// Test for scanning block comments in T-SQL.
+func TestScanBlockComment(t *testing.T) {
+	src1 := []byte("/*comment1*/")
+	src2 := []byte("/**/")
+	src3 := []byte("/*comment /*level1*/ level0 */")
+	src4 := []byte("/* /*/*/* x\n */*/*/ */")
+	var s1, s2, s3, s4 Scanner
+	s1.Init("s1", src1)
+	s2.Init("s2", src2)
+	s3.Init("s3", src3)
+	s4.Init("s4", src4)
+
+	comments := make([]string, 4)
+	comments[0] = s1.scanBlockComment()
+	comments[1] = s2.scanBlockComment()
+	comments[2] = s3.scanBlockComment()
+	comments[3] = s4.scanBlockComment()
+
+	exp := make([]string, 4)
+	exp[0] = "/*comment1*/"
+	exp[1] = "/**/"
+	exp[2] = "/*comment /*level1*/ level0 */"
+	exp[3] = "/* /*/*/* x\n */*/*/ */"
+
+	for i := 0; i < 4; i++ {
+		if comments[i] != exp[i] {
+			t.Errorf("Expected [%s], got [%s]", exp[i], comments[i])
+		}
+	}
+}
+
+// Test for scanning line comment in T-SQL.
+func TestScanLineComment(t *testing.T) {
+	src1 := []byte("--first comment\n SELECT")
+	src2 := []byte("--\n SELECT")
+	src3 := []byte("--   Another -- comment\r\n SELECT")
+	var s1, s2, s3 Scanner
+	s1.Init("s1", src1)
+	s2.Init("s2", src2)
+	s3.Init("s3", src3)
+
+	comments := make([]string, 3)
+	comments[0] = s1.scanLineComment()
+	comments[1] = s2.scanLineComment()
+	comments[2] = s3.scanLineComment()
+
+	exp := make([]string, 3)
+	exp[0] = "--first comment"
+	exp[1] = "--"
+	exp[2] = "--   Another -- comment"
+
+	for i := 0; i < 3; i++ {
+		if comments[i] != exp[i] {
+			t.Errorf("Expected [%s], got [%s]", exp[i], comments[i])
+		}
+	}
+}
 
 // Test for scanning numbers in T-SQL.
 func TestScanNumber(t *testing.T) {
@@ -77,7 +161,7 @@ func TestScanSQLString(t *testing.T) {
 
 // Test for scanning several identifiers.
 func TestIdentifierMany(t *testing.T) {
-	src1 := []byte("       GOSIA    \t DamiansTable\n")
+	src1 := []byte("       GOSIA    \t DamiansTable\n x.Name")
 	var s Scanner
 	s.Init("s", src1)
 
@@ -85,13 +169,17 @@ func TestIdentifierMany(t *testing.T) {
 	firstId := s.scanIdentifier()
 	s.skipWhitespace()
 	secondId := s.scanIdentifier()
+	s.skipWhitespace()
+	thirdId := s.scanIdentifier()
 
 	if firstId != "GOSIA" {
 		t.Errorf("Expected <GOSIA>, got: <%s>", firstId)
 	}
-
 	if secondId != "DamiansTable" {
 		t.Errorf("Expected <DamiansTable>, got: <%s>", secondId)
+	}
+	if thirdId != "x" {
+		t.Errorf("Expected <x>, got: <%s>", thirdId)
 	}
 }
 
