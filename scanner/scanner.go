@@ -7,6 +7,8 @@ import (
 	"unicode/utf8"
 )
 
+// TODO: Double words keywords like LEFT JOIN or GROUP BY
+
 const bom = 0xFEFF     // byte order mark, only permitted as very first character
 const singleQuote = 39 // value for single quote character
 const doubleQuote = 34 // value for double quote character
@@ -29,6 +31,7 @@ func (s *Scanner) Scan() (token.Token, string) {
 	case isLetter(ch):
 		literal = s.scanIdentifier()
 		if len(literal) > 1 {
+			// TODO: case for "ORDER BY" and "GROUP BY"
 			tok = token.KeywordLookup(strings.ToUpper(literal))
 
 			if tok == token.IDENT {

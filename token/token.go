@@ -29,19 +29,22 @@ const (
 	AS
 	FROM
 	WHERE
-	GROUPBY  // GROUP BY
-	ORDERBY  // ORDER BY
-	LEFTJOIN // LEFT JOIN
-	RIGHTJOIN
-	FULLJOIN
-	INNERJOIN
-	CROSSJOIN
+	GROUPBY // GROUP BY
+	ORDERBY // ORDER BY
+	JOIN    //
+	LEFT
+	RIGHT
+	FULL
+	INNER
+	CROSS
 	HAVING
 	INTO
 	CASE
 	WHEN
 	THEN
 	END
+	CUBE
+	ROLLUP
 	keywordEnd
 
 	aggFuncsBeg
@@ -110,23 +113,26 @@ var tokens = [...]string{
 	STRING: "STRING",
 	AS:     "AS",
 
-	SELECT:    "SELECT",
-	TOP:       "TOP",
-	FROM:      "FROM",
-	WHERE:     "WHERE",
-	GROUPBY:   "GROUP BY",
-	ORDERBY:   "ORDER BY",
-	LEFTJOIN:  "LEFT JOIN",
-	RIGHTJOIN: "RIGHT JOIN",
-	FULLJOIN:  "FULL JOIN",
-	INNERJOIN: "INNER JOIN",
-	CROSSJOIN: "CROSS JOIN",
-	HAVING:    "HAVING",
-	INTO:      "INTO",
-	CASE:      "CASE",
-	WHEN:      "WHEN",
-	THEN:      "THEN",
-	END:       "END",
+	SELECT:  "SELECT",
+	TOP:     "TOP",
+	FROM:    "FROM",
+	WHERE:   "WHERE",
+	GROUPBY: "GROUP BY",
+	ORDERBY: "ORDER BY",
+	JOIN:    "JOIN",
+	LEFT:    "LEFT",
+	RIGHT:   "RIGHT",
+	FULL:    "FULL",
+	INNER:   "INNER",
+	CROSS:   "CROSS",
+	HAVING:  "HAVING",
+	INTO:    "INTO",
+	CASE:    "CASE",
+	WHEN:    "WHEN",
+	THEN:    "THEN",
+	END:     "END",
+	CUBE:    "CUBE",
+	ROLLUP:  "ROLLUP",
 
 	APPROX_COUNT_DISTINCT: "APPROX_COUNT_DISTINCT",
 	AVG:                   "AVG",
