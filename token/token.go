@@ -31,7 +31,10 @@ const (
 	WHERE
 	GROUPBY // GROUP BY
 	ORDERBY // ORDER BY
-	JOIN    //
+	PARTITIONBY
+	FORCEORDER
+	JOIN
+	ON
 	LEFT
 	RIGHT
 	FULL
@@ -45,9 +48,7 @@ const (
 	END
 	CUBE
 	ROLLUP
-	keywordEnd
 
-	aggFuncsBeg
 	APPROX_COUNT_DISTINCT
 	AVG
 	CHECKSUM_AGG
@@ -63,7 +64,19 @@ const (
 	SUM
 	VAR
 	VARP
-	aggFuncsEnd
+	RECOMPILE
+	IN
+	BETWEEN
+	ANY
+	ALL
+	LIKE
+	SOME
+	AND
+	OR
+	NOT
+	WITH
+	OPTION
+	keywordEnd
 
 	operatorBeg
 	// Operators in T-SQL
@@ -72,23 +85,14 @@ const (
 	MUL // *
 	DIV // /
 	MOD // %
-	AND
-	OR
-	NOT
 
-	ASSIGN // =
-	EQL    // =
-	NEQ    // !=
-	LSS    // <
-	GTR    // >
-	LEQ    // <=
-	GEQ    // >=
-	IN
-	BETWEEN
-	ANY
-	ALL
-	LIKE
-	SOME
+	ASSIGN       // =
+	EQL          // =
+	NEQ          // !=
+	LSS          // <
+	GTR          // >
+	LEQ          // <=
+	GEQ          // >=
 	LPAREN       // (
 	LBRACK       // [
 	LBRACE       // {
@@ -113,26 +117,31 @@ var tokens = [...]string{
 	STRING: "STRING",
 	AS:     "AS",
 
-	SELECT:  "SELECT",
-	TOP:     "TOP",
-	FROM:    "FROM",
-	WHERE:   "WHERE",
-	GROUPBY: "GROUP BY",
-	ORDERBY: "ORDER BY",
-	JOIN:    "JOIN",
-	LEFT:    "LEFT",
-	RIGHT:   "RIGHT",
-	FULL:    "FULL",
-	INNER:   "INNER",
-	CROSS:   "CROSS",
-	HAVING:  "HAVING",
-	INTO:    "INTO",
-	CASE:    "CASE",
-	WHEN:    "WHEN",
-	THEN:    "THEN",
-	END:     "END",
-	CUBE:    "CUBE",
-	ROLLUP:  "ROLLUP",
+	SELECT:      "SELECT",
+	TOP:         "TOP",
+	FROM:        "FROM",
+	WHERE:       "WHERE",
+	GROUPBY:     "GROUP BY",
+	ORDERBY:     "ORDER BY",
+	PARTITIONBY: "PARTITION BY",
+	FORCEORDER:  "FORCE ORDER",
+	JOIN:        "JOIN",
+	ON:          "ON",
+	LEFT:        "LEFT",
+	RIGHT:       "RIGHT",
+	FULL:        "FULL",
+	INNER:       "INNER",
+	CROSS:       "CROSS",
+	HAVING:      "HAVING",
+	INTO:        "INTO",
+	CASE:        "CASE",
+	WHEN:        "WHEN",
+	THEN:        "THEN",
+	END:         "END",
+	CUBE:        "CUBE",
+	ROLLUP:      "ROLLUP",
+	WITH:        "WITH",
+	OPTION:      "OPTION",
 
 	APPROX_COUNT_DISTINCT: "APPROX_COUNT_DISTINCT",
 	AVG:                   "AVG",
@@ -149,15 +158,22 @@ var tokens = [...]string{
 	SUM:                   "SUM",
 	VAR:                   "VAR",
 	VARP:                  "VARP",
+	RECOMPILE:             "RECOMPILE",
+	AND:                   "AND",
+	OR:                    "OR",
+	NOT:                   "NOT",
+	IN:                    "IN",
+	BETWEEN:               "BETWEEN",
+	ANY:                   "ANY",
+	ALL:                   "ALL",
+	LIKE:                  "LIKE",
+	SOME:                  "SOME",
 
 	ADD: "+",
 	SUB: "-",
 	MUL: "*",
 	DIV: "/",
 	MOD: "%",
-	AND: "AND",
-	OR:  "OR",
-	NOT: "NOT",
 
 	ASSIGN:       "=",
 	EQL:          "=",
@@ -166,12 +182,6 @@ var tokens = [...]string{
 	GTR:          ">",
 	LEQ:          "<=",
 	GEQ:          ">=",
-	IN:           "IN",
-	BETWEEN:      "BETWEEN",
-	ANY:          "ANY",
-	ALL:          "ALL",
-	LIKE:         "LIKE",
-	SOME:         "SOME",
 	LPAREN:       "(",
 	LBRACK:       "[",
 	LBRACE:       "{",
@@ -191,12 +201,16 @@ func (t Token) String() string {
 	if 0 <= t && t < Token(len(tokens)) {
 		return tokens[t]
 	}
-
 	return "token_" + strconv.Itoa(int(t))
 }
 
-var aggFuncNames map[string]Token
 var keywords map[string]Token
+
+// Map MultiwordKeywords stores multi-word keywords like "GROUP BY", "ORDER BY"
+// etc. Key in this map is the first word of the keyword and value is an int
+// which points how many words are contained in this keyword.
+// For example in "GROUP BY": MultiwordKeywords["GROUP"] = 1 ("BY").
+var MultiwordKeywords map[string]int
 
 // Function init creates mainKeywords and keywords global package maps.
 func init() {
@@ -205,10 +219,11 @@ func init() {
 		keywords[tokens[i]] = Token(i)
 	}
 
-	aggFuncNames = make(map[string]Token)
-	for i := aggFuncsBeg + 1; i < aggFuncsEnd; i++ {
-		aggFuncNames[tokens[i]] = Token(i)
-	}
+	MultiwordKeywords = make(map[string]int)
+	MultiwordKeywords["GROUP"] = 1
+	MultiwordKeywords["ORDER"] = 1
+	MultiwordKeywords["PARTITION"] = 1
+	MultiwordKeywords["FORCE"] = 1
 }
 
 // Ranges for precedence ranges for operators in T-SQL.
@@ -249,16 +264,6 @@ func KeywordLookup(identifier string) Token {
 	return IDENT
 }
 
-// AggFuncLookup search for aggregation function name Token based on given
-// identifier.
-func AggFuncLookup(identifier string) Token {
-	tok, isAggFuncName := aggFuncNames[identifier]
-	if isAggFuncName {
-		return tok
-	}
-	return IDENT
-}
-
 // IsLiteral returns true for tokens which are defined as literals.
 func (t Token) IsLiteral() bool {
 	return literalBeg < t && t < literalEnd
@@ -267,11 +272,6 @@ func (t Token) IsLiteral() bool {
 // IsKeyword returns true for tokens which are defined as keywords.
 func (t Token) IsKeyword() bool {
 	return keywordBeg < t && t < keywordEnd
-}
-
-// IsAggFunc returns true for tokens which are defined as aggregation functions.
-func (t Token) IsAggFunc() bool {
-	return aggFuncsBeg < t && t < aggFuncsEnd
 }
 
 // IsOperator returns true for tokens which are defined as operator.

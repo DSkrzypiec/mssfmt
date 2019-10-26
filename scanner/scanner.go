@@ -7,12 +7,14 @@ import (
 	"unicode/utf8"
 )
 
-// TODO: Double words keywords like LEFT JOIN or GROUP BY
-
 const bom = 0xFEFF     // byte order mark, only permitted as very first character
 const singleQuote = 39 // value for single quote character
 const doubleQuote = 34 // value for double quote character
 
+// Scanner represents current state of scanning .sql file char by char. In
+// source filed SQL script content is stored as slice of bytes. Field char
+// contains current character, offset is number of character in the file and
+// rdOffset is position after current offset.
 type Scanner struct {
 	fileName string
 	source   []byte // source content that is being scanned
@@ -21,7 +23,9 @@ type Scanner struct {
 	rdOffset int    // reading offset - position after current char
 }
 
-// TODO...
+// Scan method scans T-SQL script and returns T-SQL tokens defined in token
+// package. Single call of Scan scans single token. Scan ends scanning after
+// token.EOF.
 func (s *Scanner) Scan() (token.Token, string) {
 	var tok token.Token
 	var literal string
@@ -30,13 +34,13 @@ func (s *Scanner) Scan() (token.Token, string) {
 	switch ch := s.char; {
 	case isLetter(ch):
 		literal = s.scanIdentifier()
+		ucLit := strings.ToUpper(literal)
 		if len(literal) > 1 {
-			// TODO: case for "ORDER BY" and "GROUP BY"
-			tok = token.KeywordLookup(strings.ToUpper(literal))
-
-			if tok == token.IDENT {
-				tok = token.AggFuncLookup(strings.ToUpper(literal))
+			if howMany, isMulti := token.MultiwordKeywords[ucLit]; isMulti {
+				return s.handleMultiwordKeyword(literal, howMany)
 			}
+
+			tok = token.KeywordLookup(strings.ToUpper(literal))
 			return tok, literal
 		} else {
 			return token.IDENT, literal
@@ -57,32 +61,49 @@ func (s *Scanner) Scan() (token.Token, string) {
 		case singleQuote:
 			return token.STRING, s.scanSQLString()
 		case '+':
-			return token.ADD, ""
+			return token.ADD, "+"
 		case '-':
-			return token.SUB, ""
+			return token.SUB, "-"
 		case '*':
-			return token.MUL, ""
+			return token.MUL, "*"
 		case '/':
-			return token.DIV, ""
+			return token.DIV, "/"
 		case '%':
-			return token.MOD, ""
+			return token.MOD, "%"
 		case '=':
-			return token.ASSIGN, ""
+			return token.ASSIGN, "="
 		case '.':
-			return token.PERIOD, ""
+			return token.PERIOD, "."
 		case ',':
-			return token.COMMA, ""
+			return token.COMMA, ","
 		case ';':
-			return token.SEMICOLON, ""
+			return token.SEMICOLON, ";"
 		case '(':
-			return token.LPAREN, ""
+			return token.LPAREN, "("
 		case ')':
-			return token.RPAREN, ""
+			return token.RPAREN, ")"
 		default:
 			return token.ILLEGAL, ""
 		}
 	}
 	return token.ILLEGAL, ""
+}
+
+// Method handleMultiwordKeyword scans the rest (after first word) part of
+// multi-word keyword.
+func (s *Scanner) handleMultiwordKeyword(firstWord string, nWords int) (token.Token, string) {
+	words := make([]string, nWords+1)
+	words[0] = firstWord
+
+	for i := 0; i < nWords; i++ {
+		s.skipWhitespace()
+		lit := s.scanIdentifier()
+		words[i+1] = lit
+	}
+
+	keyword := strings.Join(words, " ")
+	tok := token.KeywordLookup(strings.ToUpper(keyword))
+	return tok, keyword
 }
 
 // Init method prepares Scanner for start of the source file for scanning its

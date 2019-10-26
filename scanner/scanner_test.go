@@ -1,34 +1,127 @@
 package scanner
 
 import (
-	"fmt"
 	"mssfmt/token"
 	"testing"
 )
 
-// TODO: Transform into real unit test.
+// Test for Scan method on short T-SQL script.
 func TestFirstScan(t *testing.T) {
-	src := []byte(` Select
-	x.A,	--some comment here
-	x.ColName,  /* another comment /*
-	-- */
-	*/
-	(154.12 + 5412) * 4.2 as Crap
-fRoM
-	tableName x `)
+	var scanner Scanner
+	scanner.Init("ShortEx", shortScriptEx())
+	expTokens, expLits := shortScriptTokens()
 
-	var s Scanner
-	s.Init("s", src)
-	fmt.Println(string(src))
-	fmt.Println("After scanning:")
+	toks := make([]token.Token, 0, 50)
+	lits := make([]string, 0, 50)
 
 	for {
-		tok, lit := s.Scan()
+		tok, lit := scanner.Scan()
 		if tok == token.EOF {
 			break
 		}
-		fmt.Printf("[%s] %s \n", tok, lit)
+		toks = append(toks, tok)
+		lits = append(lits, lit)
 	}
+
+	for id, tok := range expTokens {
+		if tok != toks[id] {
+			t.Errorf("[Token] [Id = %d] Expected <%s>, got <%s>", id, tok, toks[id])
+		}
+
+		if expLits[id] != lits[id] {
+			t.Errorf("[Literal] [Id = %d] Expected <%s><%v>, got <%s><%v>",
+				id, expLits[id], []byte(expLits[id]), lits[id], []byte(lits[id]))
+		}
+	}
+
+}
+
+func shortScriptEx() []byte {
+	src := []byte(`--comment
+;With tmp As (
+	SELECT count(*) as cnt, sum(x) as sumx   from SampleTable 
+	group   by z 
+	order by z
+)
+Select Avg(sumx) from tmp`)
+	return src
+}
+
+func shortScriptTokens() ([]token.Token, []string) {
+	toks := make([]token.Token, 0, 50)
+	lits := make([]string, 0, 50)
+
+	toks = append(toks, token.COMMENT)
+	toks = append(toks, token.SEMICOLON)
+	toks = append(toks, token.WITH)
+	toks = append(toks, token.IDENT)
+	toks = append(toks, token.AS)
+	toks = append(toks, token.LPAREN)
+	toks = append(toks, token.SELECT)
+	toks = append(toks, token.COUNT)
+	toks = append(toks, token.LPAREN)
+	toks = append(toks, token.MUL)
+	toks = append(toks, token.RPAREN)
+	toks = append(toks, token.AS)
+	toks = append(toks, token.IDENT)
+	toks = append(toks, token.COMMA)
+	toks = append(toks, token.SUM)
+	toks = append(toks, token.LPAREN)
+	toks = append(toks, token.IDENT)
+	toks = append(toks, token.RPAREN)
+	toks = append(toks, token.AS)
+	toks = append(toks, token.IDENT)
+	toks = append(toks, token.FROM)
+	toks = append(toks, token.IDENT)
+	toks = append(toks, token.GROUPBY)
+	toks = append(toks, token.IDENT)
+	toks = append(toks, token.ORDERBY)
+	toks = append(toks, token.IDENT)
+	toks = append(toks, token.RPAREN)
+	toks = append(toks, token.SELECT)
+	toks = append(toks, token.AVG)
+	toks = append(toks, token.LPAREN)
+	toks = append(toks, token.IDENT)
+	toks = append(toks, token.RPAREN)
+	toks = append(toks, token.FROM)
+	toks = append(toks, token.IDENT)
+
+	lits = append(lits, "--comment")
+	lits = append(lits, ";")
+	lits = append(lits, "With")
+	lits = append(lits, "tmp")
+	lits = append(lits, "As")
+	lits = append(lits, "(")
+	lits = append(lits, "SELECT")
+	lits = append(lits, "count")
+	lits = append(lits, "(")
+	lits = append(lits, "*")
+	lits = append(lits, ")")
+	lits = append(lits, "as")
+	lits = append(lits, "cnt")
+	lits = append(lits, ",")
+	lits = append(lits, "sum")
+	lits = append(lits, "(")
+	lits = append(lits, "x")
+	lits = append(lits, ")")
+	lits = append(lits, "as")
+	lits = append(lits, "sumx")
+	lits = append(lits, "from")
+	lits = append(lits, "SampleTable")
+	lits = append(lits, "group by")
+	lits = append(lits, "z")
+	lits = append(lits, "order by")
+	lits = append(lits, "z")
+	lits = append(lits, ")")
+	lits = append(lits, "Select")
+	lits = append(lits, "Avg")
+	lits = append(lits, "(")
+	lits = append(lits, "sumx")
+	lits = append(lits, ")")
+	lits = append(lits, "from")
+	lits = append(lits, "tmp")
+
+	return toks, lits
 }
 
 // Test for scanning block comments in T-SQL.
