@@ -25,6 +25,7 @@ const (
 	keywordBeg
 	// T-SQL keywords
 	SELECT
+	DISTINCT
 	TOP
 	AS
 	FROM
@@ -118,6 +119,7 @@ var tokens = [...]string{
 	AS:     "AS",
 
 	SELECT:      "SELECT",
+	DISTINCT:    "DISTINCT",
 	TOP:         "TOP",
 	FROM:        "FROM",
 	WHERE:       "WHERE",
