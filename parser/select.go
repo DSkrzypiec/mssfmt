@@ -7,22 +7,25 @@ import (
 
 // Method SelectQuery parse SELECT query. This method assumes that token SELECT
 // was already parsed.
-func (p *Parser) SelectQuery() ast.SelectQuery {
-	distType := p.selectDistinct()
-
+func (p *Parser) SelectQuery() *ast.SelectQuery {
+	selectTree := ast.SelectQuery{}
+	p.selectDistinct(&selectTree)
 	// TODO
-	return ast.SelectQuery{distType, nil, nil, nil, nil, nil, nil, nil, nil}
+
+	return &selectTree
 }
 
 // Method selectDistinct parses [ALL | DISTINCT | ] clause in SELECT query.
-func (p *Parser) selectDistinct() ast.DistinctType {
+func (p *Parser) selectDistinct(selectTree *ast.SelectQuery) {
 	if p.word.Token == token.DISTINCT {
 		p.next()
-		return ast.DistinctType{false, true}
+		(*selectTree).DistinctType = ast.DistinctType{false, true}
+		return
 	}
 	if p.word.Token == token.ALL {
 		p.next()
-		return ast.DistinctType{true, false}
+		(*selectTree).DistinctType = ast.DistinctType{true, false}
+		return
 	}
-	return ast.DistinctType{false, false}
+	(*selectTree).DistinctType = ast.DistinctType{false, false}
 }
