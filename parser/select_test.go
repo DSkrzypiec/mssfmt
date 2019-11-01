@@ -26,17 +26,17 @@ func TestParseSelectDistinct(t *testing.T) {
 	st := ast.SelectQuery{}
 	p1.selectDistinct(&st)
 
-	if st.DistinctType != (ast.DistinctType{false, false}) {
+	if st.DistinctType != nil {
 		t.Errorf("Wrong parsed case without DISTINCT and ALL")
 	}
 
 	p2.selectDistinct(&st)
-	if st.DistinctType != (ast.DistinctType{false, true}) {
+	if *st.DistinctType != (ast.DistinctType{false, true}) {
 		t.Errorf("Wrong parsed case with DISTINCT")
 	}
 
 	p3.selectDistinct(&st)
-	if st.DistinctType != (ast.DistinctType{true, false}) {
+	if *st.DistinctType != (ast.DistinctType{true, false}) {
 		t.Errorf("Wrong parsed case with ALL")
 	}
 }

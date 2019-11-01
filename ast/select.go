@@ -13,7 +13,7 @@ package ast
 //	    [ HAVING < search_condition > ]
 //
 type SelectQuery struct {
-	DistinctType DistinctType
+	DistinctType *DistinctType
 	Top          *TopClaues
 	Columns      []Column
 	Into         *IntoClause
@@ -32,8 +32,13 @@ type DistinctType struct {
 	Distinct bool
 }
 
-// TopClaues represents SELECT TOP clause.
-type TopClaues struct{}
+// TopClaues represents SELECT TOP clause. // TODO
+type TopClaues struct {
+	Number        *int
+	Expression    struct{} // TODO
+	PercentParam  bool
+	WithTiesParam bool
+}
 
 type Column struct{}
 type IntoClause struct{}

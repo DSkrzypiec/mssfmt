@@ -17,15 +17,26 @@ func (p *Parser) SelectQuery() *ast.SelectQuery {
 
 // Method selectDistinct parses [ALL | DISTINCT | ] clause in SELECT query.
 func (p *Parser) selectDistinct(selectTree *ast.SelectQuery) {
+	if p.word.Token != token.DISTINCT && p.word.Token != token.ALL {
+		return
+	}
+
 	if p.word.Token == token.DISTINCT {
 		p.next()
-		(*selectTree).DistinctType = ast.DistinctType{false, true}
+		(*selectTree).DistinctType = &ast.DistinctType{false, true}
 		return
 	}
 	if p.word.Token == token.ALL {
 		p.next()
-		(*selectTree).DistinctType = ast.DistinctType{true, false}
+		(*selectTree).DistinctType = &ast.DistinctType{true, false}
 		return
 	}
-	(*selectTree).DistinctType = ast.DistinctType{false, false}
+	(*selectTree).DistinctType = nil
+}
+
+//
+func (p *Parser) selectTop(selectTree *ast.SelectQuery) {
+	if p.word.Token != token.TOP {
+		return
+	}
 }
