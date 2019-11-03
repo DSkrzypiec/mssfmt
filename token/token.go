@@ -27,6 +27,8 @@ const (
 	SELECT
 	DISTINCT
 	TOP
+	PERCENT
+	WITHTIES
 	AS
 	FROM
 	WHERE
@@ -121,6 +123,8 @@ var tokens = [...]string{
 	SELECT:      "SELECT",
 	DISTINCT:    "DISTINCT",
 	TOP:         "TOP",
+	PERCENT:     "PERCENT",
+	WITHTIES:    "WITH TIES",
 	FROM:        "FROM",
 	WHERE:       "WHERE",
 	GROUPBY:     "GROUP BY",
@@ -226,6 +230,7 @@ func init() {
 	MultiwordKeywords["ORDER"] = 1
 	MultiwordKeywords["PARTITION"] = 1
 	MultiwordKeywords["FORCE"] = 1
+	// MultiwordKeywords["WITH"] = 1 TODO: will it clash with regular WITH?
 }
 
 // Ranges for precedence ranges for operators in T-SQL.

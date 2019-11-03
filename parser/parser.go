@@ -51,4 +51,10 @@ func (p *Parser) next() {
 
 	p.offset++
 	p.word = p.source[p.offset]
+
+	// During parsing Parser ommit comments. Comment will be added
+	// during printing the tree.
+	if p.word.Token == token.COMMENT {
+		p.next()
+	}
 }

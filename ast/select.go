@@ -14,7 +14,7 @@ package ast
 //
 type SelectQuery struct {
 	DistinctType *DistinctType
-	Top          *TopClaues
+	Top          *TopClause
 	Columns      []Column
 	Into         *IntoClause
 	From         *FromClause
@@ -33,9 +33,9 @@ type DistinctType struct {
 }
 
 // TopClaues represents SELECT TOP clause. // TODO
-type TopClaues struct {
-	Number        *int
-	Expression    struct{} // TODO
+type TopClause struct {
+	NumberLit     *string
+	Expression    *string
 	PercentParam  bool
 	WithTiesParam bool
 }
