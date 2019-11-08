@@ -3,7 +3,6 @@ package parser
 import (
 	"mssfmt/ast"
 	"mssfmt/token"
-	"strings"
 )
 
 // Method SelectQuery parse SELECT query. This method assumes that token SELECT
@@ -37,7 +36,10 @@ func (p *Parser) selectDistinct(selectTree *ast.SelectQuery) {
 	(*selectTree).DistinctType = nil
 }
 
-//
+// Method selectTop parses TOP clause in SELECT query. TOP clause is of the form
+// "TOP (expression) [PERCENT] [WITH TIES]". This method uses Parser to update
+// ast.SelectQuery object. In case when TOP clause doesn't occur in SELECT query
+// then nil is set and Parser doesn't move next().
 func (p *Parser) selectTop(selectTree *ast.SelectQuery) {
 	if p.word.Token != token.TOP {
 		(*selectTree).Top = nil
@@ -50,25 +52,23 @@ func (p *Parser) selectTop(selectTree *ast.SelectQuery) {
 	tok := p.word.Token
 
 	if (tok == token.INT || tok == token.FLOAT) && tok != token.LPAREN {
-		numberLit := p.word.Literal
-		top.NumberLit = &numberLit
+		top.Expr = ast.Expression{ast.Word{p.word.Token, p.word.Literal}}
 		p.next()
 	}
 
 	if tok == token.LPAREN {
-		expr := make([]string, 0, 10)
+		expr := make(ast.Expression, 0, 10)
 
 		for {
 			if p.word.Token == token.RPAREN {
-				expr = append(expr, ")")
+				expr = append(expr, ast.Word{token.RPAREN, ")"})
 				break
 			}
 
-			expr = append(expr, p.word.Literal)
+			expr = append(expr, ast.Word{p.word.Token, p.word.Literal})
 			p.next()
 		}
-		exprJ := strings.Join(expr, " ")
-		top.Expression = &exprJ
+		top.Expr = expr
 		p.next()
 	}
 
