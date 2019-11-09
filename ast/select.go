@@ -17,7 +17,7 @@ import "mssfmt/token"
 type SelectQuery struct {
 	DistinctType *DistinctType
 	Top          *TopClause
-	Columns      []Column
+	Columns      []Expression
 	Into         *IntoClause
 	From         *FromClause
 	Where        *WhereClause
@@ -52,7 +52,6 @@ type TopClause struct {
 	WithTiesParam bool
 }
 
-type Column struct{}
 type IntoClause struct{}
 type FromClause struct{}
 type WhereClause struct{}
