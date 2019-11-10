@@ -12,14 +12,17 @@ func TestParseSelectTop(t *testing.T) {
 	src1 := []byte("top 42 * from")
 	src2 := []byte("TOP (0.1 + 0.3)   PErcent * from")
 	src3 := []byte("Not-a-top-clause * from")
-	var s1, s2, s3 scanner.Scanner
-	var p1, p2, p3 Parser
+	src4 := []byte("Top 55 With TIES")
+	var s1, s2, s3, s4 scanner.Scanner
+	var p1, p2, p3, p4 Parser
 	s1.Init("s1", src1)
 	s2.Init("s2", src2)
 	s3.Init("s3", src3)
+	s4.Init("s4", src4)
 	p1.Init("p1", ScanWords(s1))
 	p2.Init("p2", ScanWords(s2))
 	p3.Init("p3", ScanWords(s3))
+	p4.Init("p4", ScanWords(s4))
 
 	st := ast.SelectQuery{}
 
@@ -59,6 +62,12 @@ func TestParseSelectTop(t *testing.T) {
 	p3.selectTop(&st)
 	if st.Top != nil {
 		t.Errorf("Expected nil, got %v", st.Top)
+	}
+
+	// Case 4
+	p4.selectTop(&st)
+	if !st.Top.WithTiesParam {
+		t.Errorf("Expected [WITH TIES] but not parsed.")
 	}
 }
 

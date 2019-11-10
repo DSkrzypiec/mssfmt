@@ -12,7 +12,8 @@ func (p *Parser) SelectQuery() *ast.SelectQuery {
 
 	p.selectDistinct(&selectTree)
 	p.selectTop(&selectTree)
-	// TODO
+	p.selectColList(&selectTree)
+	// ...
 
 	return &selectTree
 }
@@ -52,7 +53,7 @@ func (p *Parser) selectTop(selectTree *ast.SelectQuery) {
 	tok := p.word.Token
 
 	if (tok == token.INT || tok == token.FLOAT) && tok != token.LPAREN {
-		top.Expr = ast.Expression{ast.Word{p.word.Token, p.word.Literal}}
+		top.Expr = ast.Expression{p.word}
 		p.next()
 	}
 
@@ -61,11 +62,11 @@ func (p *Parser) selectTop(selectTree *ast.SelectQuery) {
 
 		for {
 			if p.word.Token == token.RPAREN {
-				expr = append(expr, ast.Word{token.RPAREN, ")"})
+				expr = append(expr, p.word)
 				break
 			}
 
-			expr = append(expr, ast.Word{p.word.Token, p.word.Literal})
+			expr = append(expr, p.word)
 			p.next()
 		}
 		top.Expr = expr
@@ -76,10 +77,56 @@ func (p *Parser) selectTop(selectTree *ast.SelectQuery) {
 		top.PercentParam = true
 		p.next()
 	}
-	if p.word.Token == token.WITHTIES {
+	if p.word.Token == token.WITH && p.peek().Token == token.TIES {
 		top.WithTiesParam = true
 		p.next()
 	}
 
 	(*selectTree).Top = &top
+}
+
+// Method selectColList parses list of "columns" in SELECT query. At this point
+// single "column" is treated as T-SQL expression. It's usually comma-separated
+// list of column names but it can be any valid T-SQL expression which uses
+// functions, operators, etc. Formal definition what can be placed in SELECT
+// column list exists but mssfmt assumes that given T-SQL code is a valid code.
+// Therefore validation of all those details isn't necessary.
+func (p *Parser) selectColList(selectTree *ast.SelectQuery) {
+	stopTokens := colListStopTokens()
+	cols := make([]ast.Expression, 0, 10)
+	currCol := make(ast.Expression, 0, 3)
+
+	for {
+		if _, stop := stopTokens[p.word.Token]; stop {
+			cols = append(cols, currCol)
+			break
+		}
+		if p.word.Token == token.COMMA {
+			cols = append(cols, currCol)
+			currCol = make(ast.Expression, 0, 3)
+			p.next()
+			continue
+		}
+		currCol = append(currCol, p.word)
+		p.next()
+	}
+
+	(*selectTree).Columns = cols
+}
+
+// The following function returns dict of Tokens which should state that this is
+// end of list of columns in SELECT query.
+func colListStopTokens() map[token.Token]bool {
+	colStop := make(map[token.Token]bool)
+	colStop[token.FROM] = true
+	colStop[token.INTO] = true
+	colStop[token.SEMICOLON] = true
+	colStop[token.SELECT] = true
+	colStop[token.UPDATE] = true
+	colStop[token.INSERT] = true
+	colStop[token.TRUNCATE] = true
+	colStop[token.GO] = true
+	colStop[token.LPAREN] = true
+
+	return colStop
 }

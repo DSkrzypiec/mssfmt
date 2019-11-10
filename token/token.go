@@ -28,7 +28,7 @@ const (
 	DISTINCT
 	TOP
 	PERCENT
-	WITHTIES
+	TIES
 	AS
 	FROM
 	WHERE
@@ -51,6 +51,11 @@ const (
 	END
 	CUBE
 	ROLLUP
+	UPDATE
+	DELETE
+	INSERT
+	GO
+	TRUNCATE
 
 	APPROX_COUNT_DISTINCT
 	AVG
@@ -124,7 +129,7 @@ var tokens = [...]string{
 	DISTINCT:    "DISTINCT",
 	TOP:         "TOP",
 	PERCENT:     "PERCENT",
-	WITHTIES:    "WITH TIES",
+	TIES:        "TIES",
 	FROM:        "FROM",
 	WHERE:       "WHERE",
 	GROUPBY:     "GROUP BY",
@@ -148,6 +153,11 @@ var tokens = [...]string{
 	ROLLUP:      "ROLLUP",
 	WITH:        "WITH",
 	OPTION:      "OPTION",
+	UPDATE:      "UPDATE",
+	DELETE:      "DELETE",
+	INSERT:      "INSERT",
+	GO:          "GO",
+	TRUNCATE:    "TRUNCATE",
 
 	APPROX_COUNT_DISTINCT: "APPROX_COUNT_DISTINCT",
 	AVG:                   "AVG",

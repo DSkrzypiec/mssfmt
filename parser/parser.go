@@ -1,17 +1,12 @@
 package parser
 
 import (
+	"mssfmt/ast"
 	"mssfmt/scanner"
 	"mssfmt/token"
 )
 
-// Word represents single "word" in SQL script. It's a pair of token.Token and
-// corresponding literal.
-type Word struct {
-	Token   token.Token
-	Literal string
-}
-type Words []Word
+type Words []ast.Word
 
 // Function ScanWords scans till EOF and accumulates all SQL tokens and literals
 // as Words.
@@ -22,7 +17,7 @@ func ScanWords(s scanner.Scanner) Words {
 		if tok == token.EOF {
 			return words
 		}
-		words = append(words, Word{tok, litt})
+		words = append(words, ast.Word{tok, litt})
 	}
 }
 
@@ -30,7 +25,7 @@ func ScanWords(s scanner.Scanner) Words {
 type Parser struct {
 	fileName string
 	source   Words
-	word     Word
+	word     ast.Word
 	offset   int
 }
 
@@ -45,7 +40,7 @@ func (p *Parser) Init(name string, src Words) {
 func (p *Parser) next() {
 	if p.offset+1 == len(p.source) {
 		p.offset = len(p.source)
-		p.word = Word{token.EOF, ""}
+		p.word = ast.Word{token.EOF, ""}
 		return
 	}
 
@@ -57,4 +52,22 @@ func (p *Parser) next() {
 	if p.word.Token == token.COMMENT {
 		p.next()
 	}
+}
+
+// Method peek returns next Word in the script but don't move forward.
+// Peek peeks next non-comment token.
+func (p *Parser) peek() ast.Word {
+	i := 1
+
+	for {
+		if p.offset+i == len(p.source) {
+			return ast.Word{token.EOF, ""}
+		}
+		if p.source[p.offset+i].Token == token.COMMENT {
+			i++
+			continue
+		}
+		return p.source[p.offset+i]
+	}
+	return ast.Word{token.EOF, ""}
 }
