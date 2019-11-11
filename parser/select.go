@@ -126,7 +126,7 @@ func colListStopTokens() map[token.Token]bool {
 	colStop[token.INSERT] = true
 	colStop[token.TRUNCATE] = true
 	colStop[token.GO] = true
-	colStop[token.LPAREN] = true
+	//colStop[token.LPAREN] = true
 
 	return colStop
 }

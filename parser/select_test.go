@@ -7,6 +7,126 @@ import (
 	"testing"
 )
 
+// Test for parsing SELECT column list. Tests assumes that all tokens before the
+// column list was already parsed.
+func TestParseSelectColList(t *testing.T) {
+	ps := prepareColListParsers()
+	sts := make([]ast.SelectQuery, len(ps))
+
+	for id, p := range ps {
+		p.selectColList(&sts[id])
+	}
+
+	// Case "* from"
+	cols := sts[0].Columns
+	if len(cols) != 1 {
+		t.Errorf("Expected length = 1, got: %d", len(cols))
+	}
+	if len(cols[0]) != 1 {
+		t.Errorf("Expected num of token = 1, got: %d", len(cols[0]))
+	}
+	lit := cols[0][0].Literal
+	if lit != "*" {
+		t.Errorf("Expected literal '*', got: '%s'", lit)
+	}
+
+	// Case "5 AS X;"
+	cols1 := sts[1].Columns
+	if len(cols1) != 1 {
+		t.Errorf("Expected length = 1, got: %d", len(cols1))
+	}
+	if len(cols1[0]) != 3 {
+		t.Errorf("Expected num of token = 3, got: %d", len(cols1[0]))
+	}
+	if cols1[0][0].Token != token.INT || cols1[0][1].Token != token.AS ||
+		cols1[0][2].Literal != "X" || cols1[0][2].Token != token.IDENT {
+		t.Errorf("Expected '5 AS X', got: '%s %s %s'", cols1[0][0].Literal,
+			cols1[0][1].Token, cols1[0][2].Literal)
+	}
+
+	// Case "x.Col1, y.Col2, y.Col3, x.Col1 + y.Col2 FROM ..."
+	cols2 := sts[2].Columns
+	if len(cols2) != 4 {
+		t.Errorf("Expected 4 columns, got: %d", len(cols2))
+	}
+	if len(cols2[0]) != 3 || len(cols2[1]) != 3 || len(cols2[2]) != 3 ||
+		len(cols2[3]) != 7 {
+		t.Errorf("Expected #tokens (3, 3, 3, 7) in columns respectively, got: (%d, %d, %d, %d)",
+			len(cols2[0]), len(cols2[1]), len(cols2[2]), len(cols2[3]))
+	}
+	if cols2[1][2].Literal != "Col2" {
+		t.Errorf("In second column expected third literal as 'Col2', got '%s'",
+			cols2[1][2].Literal)
+	}
+	if cols2[3][3].Token != token.ADD {
+		t.Errorf("In forth column expected forth token as '+', got '%s'",
+			cols2[3][3].Token)
+	}
+
+	// Case "1 + 5 AS X \n SELECT ..."
+	cols3 := sts[3].Columns
+	if len(cols3) != 1 {
+		t.Errorf("Expected single column, got: %d", len(cols3))
+	}
+	if len(cols3[0]) != 5 {
+		t.Errorf("Expected num of token = 5, got: %d (%v)", len(cols3[0]),
+			cols3[0])
+	}
+
+	if cols3[0][0].Literal != "1" || cols3[0][1].Token != token.ADD ||
+		cols3[0][2].Literal != "5" || cols3[0][3].Token != token.AS ||
+		cols3[0][4].Literal != "X" {
+		t.Errorf("Expected '1 + 5 AS X', got '%s %s %s %s %s'",
+			cols3[0][0].Literal, cols3[0][1].Literal, cols3[0][2].Literal,
+			cols3[0][3].Literal, cols3[0][4].Literal)
+	}
+
+	// Case "Col1, /* comment */ Col2 --comment \n , 42 AS Y Into"
+	cols4 := sts[4].Columns
+	if len(cols4) != 3 {
+		t.Errorf("Expected 3 columns, got: %d", len(cols4))
+	}
+	if cols4[0][0].Literal != "Col1" {
+		t.Errorf("Expected first column 'Col1', got '%s'", cols4[0][0].Literal)
+	}
+	if cols4[1][0].Literal != "Col2" {
+		t.Errorf("Expected second column 'Col2', got '%s'", cols4[0][1].Literal)
+	}
+	if len(cols4[2]) != 3 {
+		t.Errorf("Expected 3 tokens in third column, got: %d (%v)",
+			len(cols4[2]), cols4[2])
+	}
+	if cols4[2][0].Literal != "42" || cols4[2][1].Token != token.AS ||
+		cols4[2][2].Literal != "Y" {
+		t.Errorf("Expected '42 AS Y', got '%s %s %s'", cols4[2][0].Literal,
+			cols4[2][1].Token, cols4[2][2].Literal)
+	}
+}
+
+// Prepares mock SQL codes in form of Parser object for testing parsing SELECT
+// column list.
+func prepareColListParsers() []Parser {
+	const n = 5
+	src := make([][]byte, n)
+	ss := make([]scanner.Scanner, n)
+	ps := make([]Parser, n)
+
+	src[0] = []byte("* from")
+	src[1] = []byte("5 AS X;")
+	src[2] = []byte("x.Col1, y.Col2, y.Col3, x.Col1 + y.Col2 FROM ...")
+	src[3] = []byte("1 + 5 AS X \n SELECT ...")
+	src[4] = []byte("Col1, /* comment */ Col2 --comment \n , 42 AS Y Into")
+
+	for i := 0; i < n; i++ {
+		ss[i].Init("s", src[i])
+		ps[i].Init("p", ScanWords(ss[i]))
+	}
+
+	return ps
+}
+
+// Test for parsing TOP clause in SELECT query. Tests assumes that SELECT
+// keyword was already parsed.
 func TestParseSelectTop(t *testing.T) {
 	// select is ommited, it assumes that it was aleardy scanned
 	src1 := []byte("top 42 * from")
