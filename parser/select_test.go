@@ -7,6 +7,52 @@ import (
 	"testing"
 )
 
+func TestParseSelectInto(t *testing.T) {
+	src1 := []byte("inTo tableName")
+	src2 := []byte("INTo  /* comment  */  tempTable") // TODO: make case for #tempTable after fixing scanner
+	src3 := []byte("not-a-into-clause")
+	var s1, s2, s3 scanner.Scanner
+	var p1, p2, p3 Parser
+	s1.Init("s1", src1)
+	s2.Init("s2", src2)
+	s3.Init("s3", src3)
+	p1.Init("p1", ScanWords(s1))
+	p2.Init("p2", ScanWords(s2))
+	p3.Init("p3", ScanWords(s3))
+
+	st := ast.SelectQuery{}
+
+	// Case 1
+	p1.selectInto(&st)
+	into1 := st.Into
+
+	if into1 == nil {
+		t.Errorf("Expected non-nil INTO clause. Got [%v]", *into1)
+	}
+	if *into1 != "tableName" {
+		t.Errorf("Expected [INTO tableName], got [INTO %s]", *into1)
+	}
+
+	// Case 2
+	p2.selectInto(&st)
+	into2 := st.Into
+
+	if into2 == nil {
+		t.Errorf("Expected non-nil INTO clause.")
+	}
+	if *into2 != "tempTable" {
+		t.Errorf("Expected [INTO #tempTable], got [INTO %s]", *into2)
+	}
+
+	// Case 3
+	p3.selectInto(&st)
+	into3 := st.Into
+
+	if into3 != nil {
+		t.Errorf("Expected nil INTO clause, got something: [%s]", *into3)
+	}
+}
+
 // Test for parsing SELECT column list. Tests assumes that all tokens before the
 // column list was already parsed.
 func TestParseSelectColList(t *testing.T) {

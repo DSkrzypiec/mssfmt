@@ -13,6 +13,7 @@ func (p *Parser) SelectQuery() *ast.SelectQuery {
 	p.selectDistinct(&selectTree)
 	p.selectTop(&selectTree)
 	p.selectColList(&selectTree)
+	p.selectInto(&selectTree)
 	// ...
 
 	return &selectTree
@@ -129,4 +130,21 @@ func colListStopTokens() map[token.Token]bool {
 	//colStop[token.LPAREN] = true
 
 	return colStop
+}
+
+// Method selectInto parses INTO expression in SELECT query.
+func (p *Parser) selectInto(selectTree *ast.SelectQuery) {
+	if p.word.Token != token.INTO {
+		(*selectTree).Into = nil
+		return
+	}
+
+	p.next()
+	if p.word.Token != token.IDENT {
+		(*selectTree).Into = nil
+		return
+	}
+
+	intoLit := p.word.Literal
+	(*selectTree).Into = &intoLit
 }
