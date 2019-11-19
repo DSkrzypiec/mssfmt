@@ -18,7 +18,7 @@ type SelectQuery struct {
 	DistinctType *DistinctType
 	Top          *TopClause
 	Columns      []Expression
-	Into         *IntoClause
+	Into         *string
 	From         *FromClause
 	Where        *WhereClause
 	GroupBy      *GroupByClause
@@ -52,7 +52,6 @@ type TopClause struct {
 	WithTiesParam bool
 }
 
-type IntoClause struct{}
 type FromClause struct{}
 type WhereClause struct{}
 type GroupByClause struct{}
