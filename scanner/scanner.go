@@ -10,6 +10,8 @@ import (
 const bom = 0xFEFF     // byte order mark, only permitted as very first character
 const singleQuote = 39 // value for single quote character
 const doubleQuote = 34 // value for double quote character
+const hashSign = 35    // value for '#' sign
+const atSign = 64      // value for '@' sign
 
 // Scanner represents current state of scanning .sql file char by char. In
 // source filed SQL script content is stored as slice of bytes. Field char
@@ -32,7 +34,7 @@ func (s *Scanner) Scan() (token.Token, string) {
 	s.skipWhitespace()
 
 	switch ch := s.char; {
-	case isLetter(ch):
+	case isLetter(ch) || ch == hashSign || ch == atSign:
 		literal = s.scanIdentifier()
 		ucLit := strings.ToUpper(literal)
 		if len(literal) > 1 {
@@ -191,7 +193,7 @@ func (s *Scanner) scanIdentifier() string {
 		return string(s.source[startOffset:s.offset])
 	}
 
-	if isLetter(s.char) {
+	if isLetter(s.char) || s.char == hashSign || s.char == atSign {
 		for isLetter(s.char) || isDigit(s.char) || isSpecialInsideIden(s.char) {
 			s.next()
 		}
@@ -283,7 +285,7 @@ func (s *Scanner) isEscapedSQ() bool {
 }
 
 func isSpecialInsideIden(char rune) bool {
-	return char == '_' || char == '@' || char == '#'
+	return char == '_' || char == atSign || char == hashSign
 }
 
 func isLetter(char rune) bool {

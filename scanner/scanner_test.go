@@ -254,9 +254,11 @@ func TestScanSQLString(t *testing.T) {
 
 // Test for scanning several identifiers.
 func TestIdentifierMany(t *testing.T) {
-	src1 := []byte("       GOSIA    \t DamiansTable\n x.Name")
-	var s Scanner
+	src1 := []byte("       GOSIA    \t DamiansTable\n x.Name  #tempTable")
+	src2 := []byte("#tempTable   \n @variableName")
+	var s, s2 Scanner
 	s.Init("s", src1)
+	s2.Init("s2", src2)
 
 	s.skipWhitespace()
 	firstId := s.scanIdentifier()
@@ -273,6 +275,20 @@ func TestIdentifierMany(t *testing.T) {
 	}
 	if thirdId != "x" {
 		t.Errorf("Expected <x>, got: <%s>", thirdId)
+	}
+
+	tempId := s2.scanIdentifier()
+	s2.skipWhitespace()
+	varId := s2.scanIdentifier()
+
+	if hashSign != rune('#') {
+		t.Errorf("Hash sign const is wrong!")
+	}
+	if tempId != "#tempTable" {
+		t.Errorf("Expected <#tempTable>, got: <%s>", tempId)
+	}
+	if varId != "@variableName" {
+		t.Errorf("Expected <@variableName>, got: <%s>", varId)
 	}
 }
 
