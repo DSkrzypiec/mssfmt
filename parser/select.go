@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"mssfmt/ast"
 	"mssfmt/token"
 )
@@ -14,6 +15,7 @@ func (p *Parser) SelectQuery() *ast.SelectQuery {
 	p.selectTop(&selectTree)
 	p.selectColList(&selectTree)
 	p.selectInto(&selectTree)
+	p.selectFrom(&selectTree)
 	// ...
 
 	return &selectTree
@@ -147,4 +149,21 @@ func (p *Parser) selectInto(selectTree *ast.SelectQuery) {
 
 	intoLit := p.word.Literal
 	(*selectTree).Into = &intoLit
+}
+
+// Method for parsing FROM clause in SELECT query.
+func (p *Parser) selectFrom(selectTree *ast.SelectQuery) {
+	if p.word.Token != token.FROM {
+		(*selectTree).From = nil
+		return
+	}
+
+	p.next()
+	if p.word.Token == token.LPAREN {
+		fmt.Println("TODO: Parsing subquery not implemented")
+	}
+	if p.word.Token == token.IDENT {
+		// p.tableName(selectTree)
+	}
+
 }
