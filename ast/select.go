@@ -140,12 +140,42 @@ type TableName struct {
 	Hints     *tableHints
 }
 
+// <tablesample_clause> ::=
+//     TABLESAMPLE [SYSTEM] ( sample_number [ PERCENT | ROWS ] )
+//         [ REPEATABLE ( repeat_seed ) ]
 type tableSampleClause struct {
 	// TODO
 }
 
+// WITH  ( <table_hint> [ [, ]...n ] )
+//
+// <table_hint> ::=
+// [ NOEXPAND ] {
+//     INDEX  ( index_value [ ,...n ] )
+//   | INDEX =  ( index_value )
+//   | FORCESEEK [( index_value ( index_column_name  [ ,... ] ) ) ]
+//   | FORCESCAN
+//   | FORCESEEK
+//   | HOLDLOCK
+//   | NOLOCK
+//   | NOWAIT
+//   | PAGLOCK
+//   | READCOMMITTED
+//   | READCOMMITTEDLOCK
+//   | READPAST
+//   | READUNCOMMITTED
+//   | REPEATABLEREAD
+//   | ROWLOCK
+//   | SERIALIZABLE
+//   | SNAPSHOT
+//   | SPATIAL_WINDOW_MAX_CELLS = integer
+//   | TABLOCK
+//   | TABLOCKX
+//   | UPDLOCK
+//   | XLOCK
+// }
 type tableHints struct {
-	// TODO
+	Hints []Expression
 }
 
 // SQLJoin represents T-SQL JOIN expressions.
