@@ -160,10 +160,30 @@ func (p *Parser) selectFrom(selectTree *ast.SelectQuery) {
 
 	p.next()
 	if p.word.Token == token.LPAREN {
-		fmt.Println("TODO: Parsing subquery not implemented")
+		fmt.Println("TODO(parser.selectFrom#163): Parsing subquery not implemented")
 	}
 	if p.word.Token == token.IDENT {
-		// p.tableName(selectTree)
+		p.tableName(selectTree)
+	}
+}
+
+// Method tableName parses table or view name just after FROM keyword in SELECT
+// query in case when token after FROM is an identifier.
+func (p *Parser) tableName(selectTree *ast.SelectQuery) {
+	tabName := ast.TableName{}
+	tabName.Name = p.word.Literal
+
+	p.next()
+	tabName.ASKeyword = p.word.Token == token.AS
+	if tabName.ASKeyword {
+		p.next()
 	}
 
+	if p.word.Token == token.IDENT {
+		alias := p.word.Literal
+		tabName.Alias = &alias
+	}
+
+	from := ast.FromClause{&tabName, nil}
+	(*selectTree).From = &from
 }

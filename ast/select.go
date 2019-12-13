@@ -144,7 +144,11 @@ type TableName struct {
 //     TABLESAMPLE [SYSTEM] ( sample_number [ PERCENT | ROWS ] )
 //         [ REPEATABLE ( repeat_seed ) ]
 type tableSampleClause struct {
-	// TODO
+	System       *string
+	SampleNumber int
+	Perc         bool
+	Repeatable   bool
+	RepSeed      int
 }
 
 // WITH  ( <table_hint> [ [, ]...n ] )

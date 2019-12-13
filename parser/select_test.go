@@ -7,9 +7,66 @@ import (
 	"testing"
 )
 
+// Test for parsing table or view name.
+func TestParseFromTableName(t *testing.T) {
+	src1 := []byte("From tableName AS tn")
+	src2 := []byte("FROM tableName tn")
+	src3 := []byte("FROM #tempTableName")
+	var s1, s2, s3 scanner.Scanner
+	var p1, p2, p3 Parser
+	s1.Init("s1", src1)
+	s2.Init("s2", src2)
+	s3.Init("s3", src3)
+	p1.Init("p1", ScanWords(s1))
+	p2.Init("p2", ScanWords(s2))
+	p3.Init("p3", ScanWords(s3))
+
+	st := ast.SelectQuery{}
+	var tabName ast.TableName
+
+	// Case 1
+	p1.selectFrom(&st)
+	tabName = *st.From.TableOrViewName
+
+	if tabName.Name != "tableName" {
+		t.Errorf("Expected 'tableName', got: '%s'", tabName.Name)
+	}
+	if !tabName.ASKeyword {
+		t.Errorf("Expected 'AS' after tableName, in [%s]", string(src1))
+	}
+	if tabName.Alias == nil {
+		t.Errorf("Expected non-nil table alias - 'tn'")
+	}
+	if *tabName.Alias != "tn" {
+		t.Errorf("Expected table alias to be 'tn', got: '%s'", *tabName.Alias)
+	}
+
+	// Case 2
+	p2.selectFrom(&st)
+	tabName = *st.From.TableOrViewName
+
+	if tabName.Name != "tableName" {
+		t.Errorf("Expected 'tableName', got: '%s'", tabName.Name)
+	}
+	if tabName.ASKeyword {
+		t.Errorf("Unexpected 'AS' token in [%s]", string(src2))
+	}
+	if tabName.Alias == nil {
+		t.Errorf("Expected non-nil table alias - 'tn'")
+	}
+	if *tabName.Alias != "tn" {
+		t.Errorf("Expected table alias to be 'tn', got: '%s'", *tabName.Alias)
+	}
+
+	// Case 3
+	//p3.selectFrom(&st)
+	//tabName = *p3.From.TableOrViewName
+}
+
+// Test for select INTO clause.
 func TestParseSelectInto(t *testing.T) {
 	src1 := []byte("inTo tableName")
-	src2 := []byte("INTo  /* comment  */  tempTable") // TODO: make case for #tempTable after fixing scanner
+	src2 := []byte("INTo  /* comment  */  #tempTable")
 	src3 := []byte("not-a-into-clause")
 	var s1, s2, s3 scanner.Scanner
 	var p1, p2, p3 Parser
@@ -40,7 +97,7 @@ func TestParseSelectInto(t *testing.T) {
 	if into2 == nil {
 		t.Errorf("Expected non-nil INTO clause.")
 	}
-	if *into2 != "tempTable" {
+	if *into2 != "#tempTable" {
 		t.Errorf("Expected [INTO #tempTable], got [INTO %s]", *into2)
 	}
 
