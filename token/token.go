@@ -57,6 +57,9 @@ const (
 	GO
 	TRUNCATE
 
+	TABLESAMPLE
+	REPEATABLE
+	ROWS
 	INDEX
 	FORCESEEK
 	FORCESCAN
@@ -181,6 +184,9 @@ var tokens = [...]string{
 	GO:          "GO",
 	TRUNCATE:    "TRUNCATE",
 
+	TABLESAMPLE:              "TABLESAMPLE",
+	REPEATABLE:               "REPEATABLE",
+	ROWS:                     "ROWS",
 	INDEX:                    "INDEX",
 	FORCESEEK:                "FORCESEEK",
 	FORCESCAN:                "FORCESCAN",
