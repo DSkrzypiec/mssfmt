@@ -38,11 +38,15 @@ const (
 	FORCEORDER
 	JOIN
 	ON
+
+	joinTypeBeg
 	LEFT
 	RIGHT
 	FULL
 	INNER
 	CROSS
+	joinTypeEnd
+
 	HAVING
 	INTO
 	CASE
@@ -339,6 +343,10 @@ func (t Token) IsLiteral() bool {
 // IsKeyword returns true for tokens which are defined as keywords.
 func (t Token) IsKeyword() bool {
 	return keywordBeg < t && t < keywordEnd
+}
+
+func (t Token) IsJoinType() bool {
+	return joinTypeBeg < t && t < joinTypeEnd
 }
 
 // IsOperator returns true for tokens which are defined as operator.

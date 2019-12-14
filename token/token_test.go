@@ -29,3 +29,13 @@ func TestKeywordLookup(t *testing.T) {
 		}
 	}
 }
+
+func TestJointTypes(t *testing.T) {
+	toks := []Token{INNER, LEFT, RIGHT, FULL, CROSS}
+
+	for _, tok := range toks {
+		if !tok.IsJoinType() {
+			t.Errorf("Expected to be 'joint type' for token: [%s]", tok)
+		}
+	}
+}
