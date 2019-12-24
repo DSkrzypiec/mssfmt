@@ -162,9 +162,11 @@ func (p *Parser) selectFrom(selectTree *ast.SelectQuery) {
 	if p.word.Token == token.LPAREN {
 		fmt.Println("TODO(parser.selectFrom#163): Parsing subquery not implemented")
 	}
+
 	if p.word.Token == token.IDENT {
 		p.tableName(selectTree)
 	}
+
 }
 
 // Method tableName parses table or view name just after FROM keyword in SELECT
@@ -178,10 +180,20 @@ func (p *Parser) tableName(selectTree *ast.SelectQuery) {
 	if tabName.ASKeyword {
 		p.next()
 	}
-
 	if p.word.Token == token.IDENT {
 		alias := p.word.Literal
 		tabName.Alias = &alias
+		p.next()
+	}
+
+	if p.word.Token == token.TABLESAMPLE {
+		// TODO: make routine for parsing table sample clause
+		// just after implementing ast.FromClause.Joins parsing
+	}
+
+	if p.word.Token == token.WITH {
+		// TODO: make routine for parsing table hints
+		// just after implementing ast.FromClause.Joins parsing
 	}
 
 	from := ast.FromClause{&tabName, nil}
