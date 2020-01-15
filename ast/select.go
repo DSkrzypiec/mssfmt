@@ -124,10 +124,10 @@ type TopClause struct {
 //     <end_date_time>::=
 //         <date_time_literal> | @date_time_variable
 type FromClause struct {
-	// At this point (2019-11-26) FromClause handels only simple FROM caluse
+	// At this point (2019-11-26) FromClause handles only simple FROM clause
 	// like tableName and joins
 	TableOrViewName *TableName
-	Joins           *[]SQLJoin
+	Joins           []SQLJoin
 }
 
 // TableName represents single table or view name with some properties like
@@ -182,12 +182,27 @@ type tableHints struct {
 	Hints []Expression
 }
 
-// SQLJoin represents T-SQL JOIN expressions.
+// SQLJoin represents T-SQL JOIN expressions. Spec:
+// <joined_table> ::=
+// {
+//     <table_source> <join_type> <table_source> ON <search_condition>
+//     | <table_source> CROSS JOIN <table_source>
+//     | left_table_source { CROSS | OUTER } APPLY right_table_source
+//     | [ ( ] <joined_table> [ ) ]
+// }
+// <join_type> ::=
+//     [ { INNER | { { LEFT | RIGHT | FULL } [ OUTER ] } } [ <join_hint> ] ]
+//     JOIN
+//
+// "Left" source table is omitted in this representation because it really isn't
+// important. In advanced cases it's really even hard to determine what is
+// "left" source table (when search condition is complex and uses more than two
+// tables). Furthermore FROM clause contains a slice of potential SQLJoins so
+// omitting previous TableName is reasonable.
 type SQLJoin struct {
-	LeftTableName  string
 	Type           SQLJoinType
 	Hints          SQLJoinHints
-	RightTableName string
+	RightTableName TableName
 	Condition      Expression
 }
 

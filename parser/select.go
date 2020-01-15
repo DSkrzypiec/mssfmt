@@ -159,14 +159,28 @@ func (p *Parser) selectFrom(selectTree *ast.SelectQuery) {
 	}
 
 	p.next()
+
+	// parsing subquery
 	if p.word.Token == token.LPAREN {
-		fmt.Println("TODO(parser.selectFrom#163): Parsing subquery not implemented")
+		fmt.Println("TODO(parser.selectFrom): Parsing subquery not implemented")
+		return
 	}
 
+	// parsing table name
 	if p.word.Token == token.IDENT {
 		p.tableName(selectTree)
+		p.next()
 	}
 
+	// parsing all JOIN expressions
+	for {
+		if !p.word.Token.IsJoinType() {
+			break
+			// TODO
+		}
+		p.joinClause(selectTree)
+		p.next()
+	}
 }
 
 // Method tableName parses table or view name just after FROM keyword in SELECT
@@ -198,4 +212,12 @@ func (p *Parser) tableName(selectTree *ast.SelectQuery) {
 
 	from := ast.FromClause{&tabName, nil}
 	(*selectTree).From = &from
+}
+
+// Method joinClause parses single JOIN expression in T-SQL query. This method
+// is meant to be called until all of JOIN expressions from the SELECT are
+// parsed. When method is called current token supposed to be SQL JOIN type
+// keyword.
+func (p *Parser) joinClause(selectTree *ast.SelectQuery) {
+	// TODO
 }
